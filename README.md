@@ -5,6 +5,10 @@
 
 Chemica is a PubChem wiki app for compounds with integration for Wikipedia, Psychonaut Wiki, PubMed, and PMC. Searches are automatically sources from PubMed, with 3D molecular viewing, chemical properties, identifiers, and more.
 
+
+https://github.com/user-attachments/assets/33b72559-45b5-4a8c-ad70-571d5741e524
+
+
 ## Features
 
 Chemica aims to have a diverse knowledge-set available, sourcing from Wikipedia, Psychonaut Wiki, PubMed, and PMC with support for local AI synthesis to blend information from multiple sources.
