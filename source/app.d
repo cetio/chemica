@@ -10,7 +10,7 @@ import gtk.style_context;
 import gdk.display;
 import gtk.types : STYLE_PROVIDER_PRIORITY_APPLICATION;
 
-import gui.chemica : ChemicaWindow;
+import gui.window : ChemicaWindow;
 
 immutable string cssPath = "resources/style.css";
 

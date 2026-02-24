@@ -1,4 +1,4 @@
-module gui.chemica;
+module gui.window;
 
 import std.stdio : writeln;
 import std.string : strip;

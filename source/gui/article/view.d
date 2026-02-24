@@ -22,6 +22,9 @@ import gtk.widget : Widget;
 import gui.article.infobox;
 import gui.article.expander;
 import gui.article.reports : Reports;
+import gui.article.render : renderPage, renderNode;
+import gui.loading : makeLoadingDots;
+import gui.window : ChemicaWindow;
 import gui.conformer.view;
 
 import akashi.pubchem;
@@ -32,8 +35,6 @@ import infer.ease : ease, SectionCallback, HeadingsCallback;
 import infer.resolve : extractCompoundNames;
 import infer.config : config;
 
-import gui.article.render : renderPage, renderNode;
-import gui.loading : makeLoadingDots;
 
 class ArticleView : Overlay
 {
@@ -128,7 +129,6 @@ public:
         homeBtn.tooltipText = "Back to home";
         homeBtn.addCssClass("nav-home-button");
         homeBtn.connectClicked(() {
-            import gui.chemica : ChemicaWindow;
             navHistory = null;
             ChemicaWindow.instance.goHome();
         });
@@ -169,10 +169,7 @@ public:
                 onCompoundNavigate(prev);
         }
         else
-        {
-            import gui.chemica : ChemicaWindow;
             ChemicaWindow.instance.goHome();
-        }
     }
 
     Page[] pages()
@@ -539,7 +536,6 @@ private:
         homeBtn.tooltipText = "Back to home";
         homeBtn.addCssClass("nav-home-button");
         homeBtn.connectClicked(() {
-            import gui.chemica : ChemicaWindow;
             ChemicaWindow.instance.goHome();
         });
         homeBtn.halign = Align.End;

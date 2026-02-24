@@ -15,7 +15,7 @@ import gtk.types : Orientation, Align;
 
 import gui.background : Background;
 import gui.loading : makeLoadingDots;
-import gui.chemica : ChemicaWindow;
+import gui.window : ChemicaWindow;
 import akashi.pubchem;
 
 class HomeView : Box

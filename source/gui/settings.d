@@ -14,6 +14,7 @@ import gtk.stack;
 import gtk.types : Orientation, Align, InputPurpose;
 
 import infer.config;
+import gui.window : ChemicaWindow;
 
 class SettingsView : Box
 {
@@ -200,7 +201,6 @@ public:
         backBtn.addCssClass("nav-home-button");
         backBtn.addCssClass("nav-back-button");
         backBtn.connectClicked(() {
-            import gui.chemica : ChemicaWindow;
             ChemicaWindow.instance.goHome();
         });
         backBtn.halign = Align.Start;
