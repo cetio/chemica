@@ -1,5 +1,7 @@
 # Chemica
 
+[![License](https://img.shields.io/badge/License-AGPL--3-blue)](LICENSE.txt)
+
 > [!NOTE]
 > Future development for Chemica is currently ambiguous. It will likely remain a floating repository for various API integrations and data sources for the foreseeable future.
 
