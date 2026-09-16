@@ -1,6 +1,7 @@
 .devin
 AGENTS.md
 tools/*
+/chemica
 
 __pycache__/
 *.py[cod]
