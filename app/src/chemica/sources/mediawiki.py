@@ -13,6 +13,7 @@ from typing import Any
 
 import requests
 
+from chemica import cache
 from chemica.core import Section
 
 # A descriptive UA identifying the app; Wikimedia's bot policy rejects the
@@ -21,7 +22,8 @@ from chemica.core import Section
 HEADERS = {"User-Agent": "chemica/0.1 (compound reference app; contact: cet)"}
 
 # Matches MediaWiki section markers: == Heading ==, === Subheading ===, etc.
-_SECTION_RE = re.compile(r"\n(={2,4})\s*(.+?)\s*\1\n")
+# The trailing newline is optional — an extract can end on the last marker.
+_SECTION_RE = re.compile(r"\n(={2,4})\s*(.+?)\s*\1(?:\n|$)")
 
 # Sections that are metadata, not article content — the same list the D app's
 # isExcludedHeading filtered. 'See also' additionally feeds the cross-ref
@@ -52,7 +54,7 @@ def resolve_title(api: str, query: str) -> str | None:
 
 def _resolve_title(api: str, query: str) -> str | None:
     url = f"{api}?action=query&titles={requests.utils.quote(query)}&format=json&redirects=1"
-    resp = requests.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return None
     pages = resp.json().get("query", {}).get("pages", {})
@@ -77,7 +79,7 @@ def _extract_sections(api: str, title: str) -> list[Section]:
         f"{api}?action=query&prop=extracts&titles={requests.utils.quote(title)}"
         f"&format=json&explaintext=1&exsectionformat=wiki"
     )
-    resp = requests.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
     pages = resp.json().get("query", {}).get("pages", {})
@@ -105,7 +107,7 @@ def _page_links(api: str, title: str, limit: int) -> list[str]:
         f"{api}?action=query&prop=links&titles={requests.utils.quote(title)}"
         f"&plnamespace=0&pllimit={limit}&format=json&formatversion=2"
     )
-    resp = requests.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
     pages = resp.json().get("query", {}).get("pages", [])
@@ -136,7 +138,7 @@ def _section_links(api: str, title: str, heading: str) -> list[str]:
         f"{api}?action=parse&page={requests.utils.quote(title)}"
         f"&prop=sections&format=json&formatversion=2"
     )
-    resp = requests.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
     sections = resp.json().get("parse", {}).get("sections", [])
@@ -154,7 +156,7 @@ def _section_links(api: str, title: str, heading: str) -> list[str]:
         f"{api}?action=parse&page={requests.utils.quote(title)}"
         f"&prop=links&section={index}&format=json&formatversion=2"
     )
-    resp = requests.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
     links = resp.json().get("parse", {}).get("links", [])
