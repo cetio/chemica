@@ -9,7 +9,6 @@ per-site source modules only carry the base URL and display name.
 from __future__ import annotations
 
 import re
-from typing import Any
 
 import requests
 

@@ -9,7 +9,6 @@ suite so CI never depends on network reachability.
 
 from __future__ import annotations
 
-import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
@@ -27,6 +26,12 @@ _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
 _ATOM_RE = re.compile(r"[A-Z][a-z]?")
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+
+# Property set shared by single and batched fetches.
+_PROPS = (
+    "Title,MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,"
+    "XLogP,ConnectivitySMILES,InChI,InChIKey"
+)
 
 # Name → resolved Compound. Module-level because the core instantiates fresh
 # PubChemSource objects per call — an instance cache would never see a repeat.
@@ -141,8 +146,7 @@ class PubChemSource:
 
     def _properties_batch(self, cids: list[int]) -> dict[int, dict[str, Any]]:
         """One call for many CIDs — PubChem accepts a comma-separated list."""
-        props = "Title,MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
-        url = f"{PUG}/compound/cid/{','.join(str(c) for c in cids)}/property/{props}/JSON"
+        url = f"{PUG}/compound/cid/{','.join(str(c) for c in cids)}/property/{_PROPS}/JSON"
         resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             return {}

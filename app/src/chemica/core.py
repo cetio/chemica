@@ -47,7 +47,7 @@ class Article:
     """A sourced article shaped into titled sections — the readable page."""
 
     title: str
-    sections: list["Section"]
+    sections: list[Section]
     url: str | None = None
     source: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
@@ -346,7 +346,6 @@ def _resolve_cross_references(
 def _article_sources(name: str):
     """Yield each registered source's Article for the name, skipping declines."""
     from chemica.sources.psychonaut import PsychonautWikiSource
-    from chemica.sources.pubmed import PubMedSource
     from chemica.sources.wikipedia import WikipediaSource
 
     for source in (WikipediaSource(), PsychonautWikiSource()):

@@ -11,8 +11,8 @@ resolution filter: candidates that don't resolve to a compound are discarded.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
 
 from chemica.core import Compound, CrossReference
 

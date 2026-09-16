@@ -141,7 +141,7 @@ def test_psychonautwiki_profile_caffeine(recording):
     # through "500 mg +" heavy, plus a full duration timeline.
     ladders, effects = PsychonautWikiSource().fetch_profile("caffeine")
 
-    oral = next(l for l in ladders if l.route == "Oral")
+    oral = next(lad for lad in ladders if lad.route == "Oral")
     assert isinstance(oral, DoseLadder)
     assert oral.threshold == "25 mg"
     assert oral.common == "50 - 150 mg"
@@ -214,7 +214,7 @@ def test_fetch_compound_page_caffeine(recording):
     assert by_source["wikipedia"].title == "Caffeine"
     assert by_source["psychonautwiki"].sections
 
-    routes = {l.route for l in page.dose_ladders}
+    routes = {lad.route for lad in page.dose_ladders}
     assert "Oral" in routes
     assert {e.route for e in page.effects} >= {"Oral"}
 
