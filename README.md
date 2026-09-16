@@ -1,46 +1,77 @@
 # Chemica
 
 [![License](https://img.shields.io/badge/License-AGPL--3-blue)](LICENSE.txt)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](app/pyproject.toml)
 
-> [!NOTE]
-> Future development for Chemica is currently ambiguous. It will likely remain a floating repository for various API integrations and data sources for the foreseeable future.
-
-Chemica is a PubChem wiki app for compounds with integration for Wikipedia, Psychonaut Wiki, PubMed, and PMC. Searches are automatically sources from PubMed, with 3D molecular viewing, chemical properties, identifiers, and more.
-
+Chemica is a compound-reference web app: give it a substance name and it assembles a sourced dossier —
+properties and identifiers from PubChem, the article from Wikipedia, dosage, effects, and interaction
+data from PsychonautWiki, literature references from PubMed, and GHS hazard pictograms from PubChem's
+safety record — rendered as a single readable page with a live 3D structure viewer.
 
 https://github.com/user-attachments/assets/33b72559-45b5-4a8c-ad70-571d5741e524
 
-
 ## Features
 
-Chemica aims to have a diverse knowledge-set available, sourcing from Wikipedia, Psychonaut Wiki, PubMed, and PMC with support for local AI synthesis to blend information from multiple sources.
+- **3D molecular viewer** — PubChem 3D conformers rendered with 3Dmol.js, with atom tooltips and a
+  2D fallback.
+- **Chemical properties and identifiers** — XLogP, MW, formula, TPSA, charge, SMILES, InChI,
+  InChIKey, CAS.
+- **Dosage tables** — per-route thresholds and dose ranges plus bioavailability, from
+  PsychonautWiki's SubstanceBox.
+- **Effects timelines** — onset / come-up / peak / offset / after-effects per route.
+- **Interactions** — dangerous and uncertain combination warnings with descriptions.
+- **GHS hazards** — pictograms, signal word, and H-statements from PubChem's safety section.
+- **Literature references** — PubMed search results linked per paper.
+- **Cross-references** — related compounds resolved and linked, including curated "See also" entries.
+- **Progressive rendering** — PubChem, Wikipedia, and PsychonautWiki fetch in parallel for first
+  paint; heavier panels (interactions, references, hazards, cross-references) load as lazy fragments.
+- **Persistent HTTP cache** — upstream responses are cached on disk, so warm loads are near-instant
+  and survive restarts.
 
-Among Chemica's features are:
+### Sources
 
-- **3D molecular view** (small and expanded) with atomic tooltips and full bond visualization.
-- **Chemical properties** (XLogP, MW, formula, charge, energy, etc.)
-- **Chemical identifiers** (SMILES, InChI, InChIKey, CAS, etc.)
-- **Automatic aggregation of dosage information** ROA, bioavailability, and thresholds.
-- **Similarity matching** structural scoring, XLogP, and MW to locate compounds with similar dosage to fill gaps.
+- **PubChem** — compound resolution, properties, identifiers, 2D/3D structures, GHS safety data.
+- **Wikipedia** — article prose and section structure.
+- **PsychonautWiki** — dosage, duration, bioavailability, and interaction data via the MediaWiki API.
+- **PubMed** — literature references via NCBI Entrez.
 
-### Integrated Knowledge Sources
-- **Wikipedia** - Search, article retrieval, and structured data extraction (PubChem CIDs)
-- **PsychonautWiki** - Specialized wiki access for substance information and Erowid cross-references
-- **PubMed** - Biomedical literature database integration via NCBI Entrez
-- **PMC** - PubMed Central full-text articles and research papers
+## Running
+
+```sh
+cd app
+pip install -e ".[web]"
+uvicorn chemica.web.main:app --port 8802
+```
+
+Then open <http://127.0.0.1:8802> and search for a compound.
+
+## Testing
+
+```sh
+cd app
+pip install -e ".[dev,web]"
+pytest
+```
+
+Tests run entirely offline against recorded API fixtures (`tests/fixtures/`). New fixtures can be
+captured with the recorders in `src/chemica/fixtures.py`.
 
 ## Architecture
 
-- `akashi.pubchem` - PubChem API integration.
-- `akashi.wikipedia` - Wikipedia API interaction and parser.
-- `akashi.psychonaut` - PsychonautWiki and Erowid data integration.
-- `akashi.entrez` - NCBI research database access (PubMed, PMC).
-- `akashi.text` - Wikitext and XML parsing utilities.
-- `infer.ease` - AI inference for easing multiple sources.
-- `infer.config` - Configuration for AI inference.
-- `infer.resolve` - Exclusion and suffix based resolution for compounds.
-- `gui` - GUI for Chemica using GTK.
+The Python package lives under `app/src/chemica/`:
+
+- `web/main.py` — FastAPI routes: the compound page plus lazy fragment endpoints.
+- `web/templates/`, `web/static/` — Jinja2 templates, styles, and front-end JavaScript.
+- `sources/` — one module per upstream API (`pubchem`, `wikipedia`, `psychonaut`, `pubmed`) with
+  shared MediaWiki helpers in `mediawiki.py`.
+- `core.py` — composes sources into a `CompoundPage`: parallel first-paint fetch, per-source error
+  isolation, and deferred panel loading.
+- `crossrefs.py` — related-compound resolution, batched to stay off the request path.
+- `cache.py` — persistent disk cache for upstream HTTP responses.
+
+The legacy D/GTK desktop client remains under `source/` for reference; it is not built.
 
 ## License
 
-Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt).
+Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt). The vendored 3Dmol.js viewer is
+covered by its own license (`app/src/chemica/web/static/3Dmol-LICENSE.txt`).
