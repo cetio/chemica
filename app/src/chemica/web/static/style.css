@@ -72,7 +72,7 @@ button
 
 button:hover { border-color: var(--accent); }
 
-.article { max-width: 1120px; margin: 0 auto; padding: 20px 24px 60px; }
+.article { max-width: min(1560px, 96vw); margin: 0 auto; padding: 20px 24px 60px; }
 
 .nav-link { color: var(--dim); text-decoration: none; }
 .nav-link:hover { text-decoration: none; color: var(--accent); }
@@ -91,7 +91,7 @@ button:hover { border-color: var(--accent); }
 
 .article-main { flex: 1; min-width: 0; }
 .article-main .lead { font-size: 15.5px; }
-.article-main p { margin: 0 0 12px; }
+.article-main p { margin: 0 0 12px; max-width: 82ch; }
 
 .section-heading { font-size: 20px; margin: 22px 0 6px; font-weight: 650; }
 
