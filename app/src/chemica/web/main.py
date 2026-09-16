@@ -145,7 +145,8 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
         or (page.articles[0] if page.articles else None)
     )
     title = compound.name if compound else article.title
-    title = title[:1].upper() + title[1:]
+    if title[:1].isascii() and title[:1].islower():
+        title = title[:1].upper() + title[1:]
     return templates.TemplateResponse(
         request,
         "article.html",
