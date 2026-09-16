@@ -22,8 +22,8 @@ from chemica.core import Section
 HEADERS = {"User-Agent": "chemica/0.1 (compound reference app; contact: cet)"}
 
 # Matches MediaWiki section markers: == Heading ==, === Subheading ===, etc.
-# The trailing newline is optional — an extract can end on the last marker.
-_SECTION_RE = re.compile(r"\n(={2,4})\s*(.+?)\s*\1(?:\n|$)")
+# Multiline anchors cover an extract that starts or ends on a marker.
+_SECTION_RE = re.compile(r"^(={2,4})\s*(.+?)\s*\1$", re.MULTILINE)
 
 # Sections that are metadata, not article content — the same list the D app's
 # isExcludedHeading filtered. 'See also' additionally feeds the cross-ref
