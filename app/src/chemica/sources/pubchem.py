@@ -163,11 +163,17 @@ class PubChemSource:
         if synonyms is None:
             synonyms = self._synonyms(cid)
         return Compound(
-            # First letter only — .title() would mangle "DMT"/"5-HTP", and
+            # Prefer the record's title so aliases render under the canonical
+            # name ('Special K' → Ketamine, 'Preludin' → Phenmetrazine). The
+            # queried term stays visible in the URL and the salt_form note.
+            # Fallback: first letter only — .title() would mangle "DMT", and
             # .upper() on non-ASCII turns α-PVP into Α-PVP (Greek capital).
-            name=query[:1].upper() + query[1:]
-            if query[:1].isascii() and query[:1].islower()
-            else query,
+            name=props.get("Title")
+            or (
+                query[:1].upper() + query[1:]
+                if query[:1].isascii() and query[:1].islower()
+                else query
+            ),
             cid=cid,
             formula=props.get("MolecularFormula"),
             molecular_weight=_float(props.get("MolecularWeight")),

@@ -11,7 +11,8 @@
         "MolecularWeight": "194.19",
         "MonoisotopicMass": "194.08037557",
         "TPSA": 58.4,
-        "XLogP": -0.1
+        "XLogP": -0.1,
+        "Title": "Caffeine"
       }
     ]
   }
