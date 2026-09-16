@@ -51,6 +51,11 @@ _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 # apostrophe runs (''...''', '''...''') — both leaked into Gantt labels raw.
 _TAG_RE = re.compile(r"</?[a-zA-Z][^>]*>")
 _APOSTROPHE_RE = re.compile(r"'{2,}")
+# A truncated {{template dangling at the end of a value — PW fields are
+# single-line, so an unclosed opener means the tail is markup (the
+# bioavailability cite-journal leak c fixed display-side). Open <ref>
+# tags are already stripped by _TAG_RE.
+_UNTERMINATED_RE = re.compile(r"\{\{[^{}]*$")
 
 # [[SeverityInteraction::Substance]] — PW's semantic annotations in the
 # 'Dangerous interactions' section; severity is the tag prefix.
@@ -211,7 +216,8 @@ def _clean_value(raw: str) -> str:
     value = _LINK_RE.sub(lambda m: (m.group(2) or m.group(1)).strip(), value)
     value = _REF_RE.sub("", value)
     value = _COMMENT_RE.sub("", value)
-    value = _TAG_RE.sub("", value)
+    value = _TAG_RE.sub(" ", value)
     value = _APOSTROPHE_RE.sub("", value)
     value = _TEMPLATE_RE.sub("", value)
+    value = _UNTERMINATED_RE.sub("", value)
     return value.strip()
