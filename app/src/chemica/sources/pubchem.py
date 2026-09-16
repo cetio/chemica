@@ -22,6 +22,11 @@ _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 
+# Name → resolved Compound. Module-level because the core instantiates fresh
+# PubChemSource objects per call — an instance cache would never see a repeat.
+# Names are stable, so entries never expire; the cache dies with the process.
+_CACHE: dict[str, Compound | None] = {}
+
 
 def _cas(synonyms: list[str]) -> str | None:
     """The CAS RN is a numeric-only synonym — the first match wins."""
@@ -35,6 +40,12 @@ class PubChemSource:
     name = "pubchem"
 
     def fetch_compound(self, query: str) -> Compound | None:
+        key = query.strip().lower()
+        if key not in _CACHE:
+            _CACHE[key] = self._uncached(query)
+        return _CACHE[key]
+
+    def _uncached(self, query: str) -> Compound | None:
         cid = self._name_to_cid(query)
         if cid is None:
             return None
