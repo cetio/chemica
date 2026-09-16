@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (atom.hoverLabel) return;
                     atom.hoverLabel = viewer.addLabel(`${atom.elem}${atom.serial}`, {
                         position: atom,
+                        screenOffset: { x: 16, y: -14 },
                         fontSize: 11,
                         fontColor: "#e8eaf0",
                         backgroundColor: "#101215",
