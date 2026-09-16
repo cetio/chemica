@@ -226,11 +226,7 @@ class PubChemSource:
             f"compound/{cid}/JSON?heading=Pharmacology+and+Biochemistry"
         )
         pharma_resp = cache.get(pharma_url, timeout=20)
-        pharma_root = (
-            pharma_resp.json().get("Record", {}).get("Section", [])
-            if pharma_resp.status_code == 200
-            else []
-        )
+        pharma_root = pharma_resp.json().get("Record", {}).get("Section", []) if pharma_resp.status_code == 200 else []
         profile = DrugProfile()
         for heading in (
             "Max Phase",
@@ -260,11 +256,7 @@ class PubChemSource:
                 classes = values[0].split(";")
                 profile = replace(
                     profile,
-                    drug_classes=[
-                        c.strip()
-                        for c in classes
-                        if c.strip() and c.strip().lower() not in _MESH_CHECKTAGS
-                    ],
+                    drug_classes=[c.strip() for c in classes if c.strip() and c.strip().lower() not in _MESH_CHECKTAGS],
                 )
             elif heading == "Biological Half-Life":
                 profile = replace(
@@ -272,9 +264,7 @@ class PubChemSource:
                     half_life=[v for v in values if not _POINTER_RE.search(v)],
                 )
             elif heading == "Black Box Warning":
-                profile = replace(
-                    profile, black_box=values[0].strip().lower() == "yes"
-                )
+                profile = replace(profile, black_box=values[0].strip().lower() == "yes")
         if profile == DrugProfile():
             return None
         return profile

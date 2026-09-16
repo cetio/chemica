@@ -266,6 +266,8 @@ def test_fetch_subjective_ketamine(recording):
     assert profile.tolerance_zero == "28 days"
     assert "Sedation" in profile.effect_tags
     assert len(profile.effect_tags) == len(set(profile.effect_tags))
+    labels = {g.label for g in profile.effect_groups}
+    assert {"Physical", "Distortions", "Cognitive"} <= labels
 
 
 def test_fetch_drug_profile_ketamine(recording):

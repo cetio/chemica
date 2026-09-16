@@ -135,6 +135,16 @@ class Classifications:
 
 
 @dataclass(frozen=True)
+class EffectGroup:
+    """PW groups subjective effects — 'Physical', 'Visual', 'Cognitive'
+    from the {{effects/X}} templates, 'Suppression'/'Distortions' from
+    subheadings inside them. Label is None for an unlabeled block."""
+
+    label: str | None
+    effects: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class SubjectiveProfile:
     """PW's safety/subjective annotations from the article wikitext —
     addiction potential, tolerance timelines, and the inline [[Effect::X]]
@@ -145,6 +155,7 @@ class SubjectiveProfile:
     tolerance_half: str | None = None
     tolerance_zero: str | None = None
     effect_tags: list[str] = field(default_factory=list)
+    effect_groups: list[EffectGroup] = field(default_factory=list)
     source: str | None = "psychonautwiki"
 
 

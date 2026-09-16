@@ -27,6 +27,7 @@ from chemica.core import (
     Classifications,
     Compound,
     DoseLadder,
+    EffectGroup,
     EffectsProfile,
     Interaction,
     SubjectiveProfile,
@@ -142,9 +143,11 @@ class PsychonautWikiSource:
         wikitext = self._page_wikitext(query)
         if not wikitext:
             return None
+        groups = _effect_groups(wikitext)
         profile = SubjectiveProfile(
             addiction_potential=_first(_ADDICTION_RE, wikitext),
-            effect_tags=list(dict.fromkeys(m.group(1).strip() for m in _EFFECT_RE.finditer(wikitext))),
+            effect_tags=list(dict.fromkeys(tag for group in groups for tag in group.effects)),
+            effect_groups=groups,
         )
         for span, value in _TOLERANCE_RE.findall(wikitext):
             field_name = "tolerance_" + span.lower()
@@ -224,6 +227,38 @@ def _effects_profiles(wikitext: str) -> list[EffectsProfile]:
             )
         )
     return profiles
+
+
+# Stop at the next level-2 heading — ==== subheads inside the section are
+# the effect groups themselves, not the end of it.
+_SUBJECTIVE_SECTION_RE = re.compile(
+    r"={2}\s*Subjective effects\s*={2}(.*?)(?=\n==[^=]|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+# {{effects/physical|…}} opens a group; ====Subhead==== splits it further.
+_EFFECT_TEMPLATE_RE = re.compile(r"\{\{effects/(\w+)", re.IGNORECASE)
+_SUBHEAD_RE = re.compile(r"={3,4}\s*([^=]+?)\s*={3,4}")
+
+
+def _effect_groups(wikitext: str) -> list[EffectGroup]:
+    section = _SUBJECTIVE_SECTION_RE.search(wikitext)
+    if section is None:
+        return []
+    groups: list[EffectGroup] = []
+    label: str | None = None
+    for line in section.group(1).splitlines():
+        template = _EFFECT_TEMPLATE_RE.search(line)
+        subhead = _SUBHEAD_RE.match(line.strip())
+        if template:
+            label = template.group(1).capitalize()
+        elif subhead:
+            label = subhead.group(1).strip()
+        tags = [m.group(1).split("|")[-1].strip() for m in _EFFECT_RE.finditer(line)]
+        if tags:
+            if not groups or groups[-1].label != label:
+                groups.append(EffectGroup(label=label))
+            groups[-1].effects.extend(tags)
+    return groups
 
 
 def _first(pattern: re.Pattern[str], text: str) -> str | None:
