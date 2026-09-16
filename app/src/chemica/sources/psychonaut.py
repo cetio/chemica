@@ -21,7 +21,13 @@ import re
 import requests
 
 from chemica import cache
-from chemica.core import Article, Compound, DoseLadder, EffectsProfile
+from chemica.core import (
+    Article,
+    Compound,
+    DoseLadder,
+    EffectsProfile,
+    Interaction,
+)
 from chemica.sources import mediawiki
 
 API = "https://psychonautwiki.org/w/api.php"
@@ -46,8 +52,19 @@ _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 _TAG_RE = re.compile(r"</?[a-zA-Z][^>]*>")
 _APOSTROPHE_RE = re.compile(r"'{2,}")
 
+# [[SeverityInteraction::Substance]] — PW's semantic annotations in the
+# 'Dangerous interactions' section; severity is the tag prefix.
+_INTERACTION_RE = re.compile(
+    r"\[\[(Dangerous|Unsafe|Uncertain)Interaction::([^\]]+)\]\]"
+)
+_INTERACTIONS_SECTION_RE = re.compile(
+    r"={2,4}\s*Dangerous interactions\s*={2,4}(.*?)(?=\n={2,4}|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+
 # SubstanceBox wikitext by page title — stable per session, process-lifetime.
 _BOX_CACHE: dict[str, str | None] = {}
+_PAGE_WT_CACHE: dict[str, str | None] = {}
 
 _DOSE_FIELDS = {"Threshold", "Light", "Common", "Strong", "Heavy", "Bioavailability"}
 _TIME_FIELDS = {"Duration", "Onset", "Comeup", "Peak", "Offset", "Aftereffects"}
@@ -84,15 +101,25 @@ class PsychonautWikiSource:
     def fetch_compound(self, query: str) -> Compound | None:
         return None
 
+    def fetch_interactions(self, query: str) -> list[Interaction]:
+        """Dangerous/unsafe/uncertain interactions from the article wikitext."""
+        title = mediawiki.resolve_title(API, query)
+        if title is None:
+            return []
+        if title not in _PAGE_WT_CACHE:
+            _PAGE_WT_CACHE[title] = self._fetch_wikitext(title)
+        wikitext = _PAGE_WT_CACHE[title]
+        return _interactions(wikitext) if wikitext else []
+
     def _substancebox(self, title: str) -> str | None:
         if title not in _BOX_CACHE:
-            _BOX_CACHE[title] = self._fetch_substancebox(title)
+            _BOX_CACHE[title] = self._fetch_wikitext(f"Template:SubstanceBox/{title}")
         return _BOX_CACHE[title]
 
-    def _fetch_substancebox(self, title: str) -> str | None:
+    def _fetch_wikitext(self, page: str) -> str | None:
         url = (
             f"{API}?action=parse&prop=wikitext&format=json&formatversion=2"
-            f"&page={requests.utils.quote('Template:SubstanceBox/' + title)}"
+            f"&page={requests.utils.quote(page)}"
         )
         resp = cache.get(url, timeout=15, headers=mediawiki.HEADERS)
         if resp.status_code != 200:
@@ -152,6 +179,31 @@ def _effects_profiles(wikitext: str) -> list[EffectsProfile]:
             )
         )
     return profiles
+
+
+def _interactions(wikitext: str) -> list[Interaction]:
+    section = _INTERACTIONS_SECTION_RE.search(wikitext)
+    if section is None:
+        return []
+    ret: list[Interaction] = []
+    for line in section.group(1).splitlines():
+        line = line.strip().lstrip("*")
+        refs = _INTERACTION_RE.findall(line)
+        if not refs:
+            continue
+        # Everything after ' - ' describes the whole line; several
+        # substances on one bullet share it (e.g. GHB / GBL).
+        desc = line.split(" - ", 1)[1] if " - " in line else ""
+        desc = _clean_value(desc) or None
+        for severity, substance in refs:
+            ret.append(
+                Interaction(
+                    substance=substance.strip(),
+                    severity=severity.lower(),
+                    description=desc,
+                )
+            )
+    return ret
 
 
 def _clean_value(raw: str) -> str:

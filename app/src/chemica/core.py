@@ -90,6 +90,21 @@ class HazardProfile:
 
 
 @dataclass(frozen=True)
+class Interaction:
+    """A substance interaction line from PsychonautWiki's annotated markup.
+
+    Severity comes straight from the [[*Interaction::…]] semantic tag —
+    'dangerous' | 'unsafe' | 'uncertain'. One line can name several
+    substances that share a description (GHB / GBL), so each gets its own
+    Interaction with the same text.
+    """
+
+    substance: str
+    severity: str
+    description: str | None = None
+
+
+@dataclass(frozen=True)
 class DoseLadder:
     """One route's dose ladder (threshold → heavy), as printed by the source.
 
@@ -237,6 +252,13 @@ def fetch_cross_references(name: str) -> list[CrossReference]:
     """
     articles = list(_article_sources(name))
     return _resolve_cross_references(name, articles, None)
+
+
+def fetch_interactions(name: str) -> list[Interaction]:
+    """PW interaction lines for the deferred interactions panel."""
+    from chemica.sources.psychonaut import PsychonautWikiSource
+
+    return _try(PsychonautWikiSource().fetch_interactions, name) or []
 
 
 def fetch_hazards(name: str) -> HazardProfile | None:

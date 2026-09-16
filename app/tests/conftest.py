@@ -117,10 +117,13 @@ def _fixture_for_url(url: str) -> Path | None:
             return FIXTURE_DIR / "wikipedia" / f"query_{_safe_name(unquote(title))}.json"
     if "psychonautwiki.org" in url:
         if "action=parse" in url:
-            # page=Template:SubstanceBox/{Title} — key on the substance title.
-            page = _extract_query_param(url, "page")
-            title = unquote(page).rsplit("/", 1)[-1]
-            return FIXTURE_DIR / "psychonaut" / f"substancebox_{_safe_name(title)}.json"
+            # page=Template:SubstanceBox/{Title} for dose data; page={Title}
+            # for the article wikitext (interactions).
+            page = unquote(_extract_query_param(url, "page"))
+            title = page.rsplit("/", 1)[-1]
+            if page.startswith("Template:SubstanceBox"):
+                return FIXTURE_DIR / "psychonaut" / f"substancebox_{_safe_name(title)}.json"
+            return FIXTURE_DIR / "psychonaut" / f"wikitext_{_safe_name(title)}.json"
         if "prop=extracts" in url:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "psychonaut" / f"extracts_{_safe_name(unquote(title))}.json"

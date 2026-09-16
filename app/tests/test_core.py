@@ -228,6 +228,21 @@ def test_fetch_compound_page_caffeine(recording):
     assert 15872156 in xref_cids  # Methylliberine
 
 
+def test_fetch_interactions_ketamine(recording):
+    # Recorded PW article wikitext: 'Dangerous interactions' lines with
+    # [[DangerousInteraction::X]] / [[UncertainInteraction::X]] annotations;
+    # a bullet naming two substances shares one description.
+    from chemica.core import fetch_interactions
+
+    interactions = fetch_interactions("ketamine")
+    by_substance = {i.substance: i for i in interactions}
+    assert by_substance["Alcohol"].severity == "dangerous"
+    assert "vomit aspiration" in by_substance["Alcohol"].description
+    assert by_substance["GHB"].severity == "dangerous"
+    assert by_substance["GBL"].description == by_substance["GHB"].description
+    assert by_substance["Amphetamines"].severity == "uncertain"
+
+
 def test_fetch_hazards_caffeine(recording):
     # PUG-View GHS Classification: pictograms dedupe across notifiers,
     # strictest signal wins, statements keep their notifier %.
