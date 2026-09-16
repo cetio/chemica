@@ -26,6 +26,32 @@ _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
 # a dot-disconnected (salt/mixture) record.
 _ATOM_RE = re.compile(r"[A-Z][a-z]?")
 
+# PubChem's 'Drug Classes' mixes MeSH check tags (population/species
+# descriptors like 'Lactation' or 'Humans') into the pharmacological-action
+# classes. Denylist the check-tag set so the card shows drug classes only.
+_MESH_CHECKTAGS = {
+    "animals",
+    "humans",
+    "male",
+    "female",
+    "pregnancy",
+    "breast feeding",
+    "lactation",
+    "milk, human",
+    "infant",
+    "infant, newborn",
+    "child",
+    "adolescent",
+    "adult",
+    "middle aged",
+    "aged",
+    "young adult",
+}
+
+# PUG-View appends 'For more X data … please visit the HSDB record page'
+# pointer rows to long sections — navigation chrome, not data.
+_POINTER_RE = re.compile(r"for more .*data for .*please visit", re.IGNORECASE)
+
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 
 # Property set shared by single and batched fetches.
@@ -234,10 +260,17 @@ class PubChemSource:
                 classes = values[0].split(";")
                 profile = replace(
                     profile,
-                    drug_classes=[c.strip() for c in classes if c.strip()],
+                    drug_classes=[
+                        c.strip()
+                        for c in classes
+                        if c.strip() and c.strip().lower() not in _MESH_CHECKTAGS
+                    ],
                 )
             elif heading == "Biological Half-Life":
-                profile = replace(profile, half_life=values)
+                profile = replace(
+                    profile,
+                    half_life=[v for v in values if not _POINTER_RE.search(v)],
+                )
             elif heading == "Black Box Warning":
                 profile = replace(
                     profile, black_box=values[0].strip().lower() == "yes"
