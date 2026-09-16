@@ -156,6 +156,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "title": title,
             "name": name,
             "compound": compound,
+            "classes": page.classes,
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
             "section_tree": _section_tree(article.sections[1:]) if article else [],

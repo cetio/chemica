@@ -17,6 +17,12 @@
   <nav class="article-nav">
     <a class="nav-link" href="/">&#8592; search</a>
     <h1 class="article-title">{{ title }}</h1>
+    {% if classes %}
+      {% set classline = [classes.psychoactive, classes.chemical] | select | join(" · ") %}
+      {% if classline %}
+      <div class="article-classes">{{ classline | capitalize }} <span class="source-tag source-pw">PW</span></div>
+      {% endif %}
+    {% endif %}
     {% if compound and compound.formula %}
       <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
     {% endif %}
