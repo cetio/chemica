@@ -10,13 +10,25 @@ suite so CI never depends on network reachability.
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 import requests
 
 from chemica.core import Article, Compound
 
+# CAS Registry Numbers look like 58-08-2: 2-7 digits, dash, 2 digits, dash, 1 digit.
+_CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
+
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
+
+
+def _cas(synonyms: list[str]) -> str | None:
+    """The CAS RN is a numeric-only synonym — the first match wins."""
+    for s in synonyms:
+        if _CAS_RE.match(s):
+            return s
+    return None
 
 
 class PubChemSource:
@@ -51,8 +63,10 @@ class PubChemSource:
         return table[0] if table else {}
 
     def _shape(self, query: str, cid: int, props: dict[str, Any]) -> Compound:
+        synonyms = self._synonyms(cid)
         return Compound(
-            name=query,
+            # First letter only — .title() would mangle "DMT"/"5-HTP".
+            name=query[:1].upper() + query[1:],
             cid=cid,
             formula=props.get("MolecularFormula"),
             molecular_weight=_float(props.get("MolecularWeight")),
@@ -63,8 +77,8 @@ class PubChemSource:
             smiles=props.get("ConnectivitySMILES"),
             inchi=props.get("InChI"),
             inchikey=props.get("InChIKey"),
-            cas=None,  # CAS comes from a different PUG endpoint; deferred
-            synonyms=self._synonyms(cid),
+            cas=_cas(synonyms),
+            synonyms=synonyms,
             raw=props,
         )
 

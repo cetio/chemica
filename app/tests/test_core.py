@@ -49,7 +49,7 @@ def test_fetch_compound_aspirin(recording):
     compound = fetch_compound("aspirin")
 
     assert isinstance(compound, Compound)
-    assert compound.name == "aspirin"
+    assert compound.name == "Aspirin"  # first letter cased for display
     assert compound.cid == ASPIRIN_CID
     assert compound.formula == "C9H8O4"
     assert compound.molecular_weight == pytest.approx(180.16)
@@ -67,11 +67,11 @@ def test_fetch_compound_aspirin(recording):
 
 def test_compound_cas_is_deferred_but_present_in_synonyms(recording):
     # PubChem puts the CAS RN in the synonyms payload; extraction into
-    # Compound.cas is deferred. Pin both facts so landing it flips this test
-    # instead of drifting silently.
+    # PubChem puts the CAS RN in the synonyms payload; _cas() extracts it
+    # from the same call so Compound.cas is populated without an extra request.
     compound = fetch_compound("aspirin")
     assert compound is not None
-    assert compound.cas is None
+    assert compound.cas == ASPIRIN_CAS
     assert ASPIRIN_CAS in compound.synonyms
 
 
@@ -218,6 +218,29 @@ def test_fetch_compound_page_caffeine(recording):
     assert len(page.references) == 5
     assert all(r.source == "pubmed" for r in page.references)
     assert page.cross_references is not None
+    # 'See also' is filtered from the article body but its curated links feed
+    # the resolver — Methylliberine is past the first-50 outlinks, so it only
+    # reaches cross_references through that path.
+    xref_cids = {r.compound.cid for r in page.cross_references}
+    assert 15872156 in xref_cids  # Methylliberine
+
+
+def test_parse_sections_filters_tail_headings():
+    # Meta sections (See also, Notes, References, ...) are not article content
+    # — the D app filtered the same list. An excluded heading's subsections go
+    # with it; real sections after it still render.
+    from chemica.sources.mediawiki import parse_sections
+
+    extract = (
+        "Lead paragraph.\n"
+        "== Uses ==\nReal content.\n"
+        "== See also ==\n* Theobromine\n"
+        "=== Curated sub ===\nmore junk\n"
+        "== Notes ==\nnote text\n"
+        "== Pharmacology ==\nReal pharmacology.\n"
+    )
+    sections = parse_sections(extract, "X")
+    assert [s.heading for s in sections] == ["X", "Uses", "Pharmacology"]
 
 
 def test_models_are_immutable(recording):
