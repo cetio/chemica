@@ -69,11 +69,7 @@ def _batched_properties(cid_list: str) -> FixtureResponse:
         path = FIXTURE_DIR / "pubchem" / f"properties_{cid}.json"
         if not path.exists():
             continue
-        rows.extend(
-            json.loads(path.read_text(encoding="utf-8"))
-            .get("PropertyTable", {})
-            .get("Properties", [])
-        )
+        rows.extend(json.loads(path.read_text(encoding="utf-8")).get("PropertyTable", {}).get("Properties", []))
     return FixtureResponse(json.dumps({"PropertyTable": {"Properties": rows}}))
 
 

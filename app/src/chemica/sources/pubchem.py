@@ -28,10 +28,7 @@ _ATOM_RE = re.compile(r"[A-Z][a-z]?")
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 
 # Property set shared by single and batched fetches.
-_PROPS = (
-    "Title,MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,"
-    "XLogP,ConnectivitySMILES,InChI,InChIKey"
-)
+_PROPS = "Title,MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
 
 # Name → resolved Compound. Module-level because the core instantiates fresh
 # PubChemSource objects per call — an instance cache would never see a repeat.
@@ -69,9 +66,7 @@ class PubChemSource:
         if base_cid is not None and base_cid != cid:
             base_props = self._properties(base_cid)
             if base_props:
-                return self._shape(
-                    query, base_cid, base_props, salt_form=props.get("Title")
-                )
+                return self._shape(query, base_cid, base_props, salt_form=props.get("Title"))
         return self._shape(query, cid, props)
 
     def _freebase_cid(self, props: dict[str, Any]) -> int | None:
@@ -81,13 +76,8 @@ class PubChemSource:
         smiles = props.get("ConnectivitySMILES") or ""
         if "." not in smiles:
             return None
-        largest = max(
-            smiles.split("."), key=lambda f: len(_ATOM_RE.findall(f))
-        )
-        url = (
-            f"{PUG}/compound/fastidentity/smiles/"
-            f"{requests.utils.quote(largest, safe='')}/cids/JSON"
-        )
+        largest = max(smiles.split("."), key=lambda f: len(_ATOM_RE.findall(f)))
+        url = f"{PUG}/compound/fastidentity/smiles/{requests.utils.quote(largest, safe='')}/cids/JSON"
         resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             return None
@@ -103,11 +93,7 @@ class PubChemSource:
         formula — so results are lighter than fetch_compound's and never
         enter _CACHE."""
         ret: dict[str, Compound | None] = {}
-        pending = [
-            q
-            for q in dict.fromkeys(queries)
-            if q.strip().lower() not in _CACHE
-        ]
+        pending = [q for q in dict.fromkeys(queries) if q.strip().lower() not in _CACHE]
         with ThreadPoolExecutor(max_workers=5) as pool:
             futures = {pool.submit(self._name_to_cid, q): q for q in pending}
             cid_for = {}
@@ -120,11 +106,7 @@ class PubChemSource:
         props_by_cid = self._properties_batch(sorted(cids)) if cids else {}
         for query in pending:
             cid = cid_for.get(query)
-            ret[query] = (
-                self._shape(query, cid, props_by_cid.get(cid, {}), synonyms=[])
-                if cid is not None
-                else None
-            )
+            ret[query] = self._shape(query, cid, props_by_cid.get(cid, {}), synonyms=[]) if cid is not None else None
         for query in queries:
             key = query.strip().lower()
             ret.setdefault(query, _CACHE.get(key))
@@ -173,11 +155,7 @@ class PubChemSource:
             # Fallback: first letter only — .title() would mangle "DMT", and
             # .upper() on non-ASCII turns α-PVP into Α-PVP (Greek capital).
             name=props.get("Title")
-            or (
-                query[:1].upper() + query[1:]
-                if query[:1].isascii() and query[:1].islower()
-                else query
-            ),
+            or (query[:1].upper() + query[1:] if query[:1].isascii() and query[:1].islower() else query),
             cid=cid,
             formula=props.get("MolecularFormula"),
             molecular_weight=_float(props.get("MolecularWeight")),
@@ -205,10 +183,7 @@ class PubChemSource:
     def fetch_hazards(self, cid: int) -> HazardProfile | None:
         """GHS classification via PUG-View: pictograms, signal word, and
         H-statements, deduplicated across the notifier entries."""
-        url = (
-            "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/"
-            f"compound/{cid}/JSON?heading=Safety+and+Hazards"
-        )
+        url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/{cid}/JSON?heading=Safety+and+Hazards"
         resp = cache.get(url, timeout=20)
         if resp.status_code != 200:
             return None
@@ -222,10 +197,7 @@ class PubChemSource:
         signal: str | None = None
         statements: list[str] = []
         for info in section.get("Information", []):
-            strings = [
-                item.get("String", "")
-                for item in info.get("Value", {}).get("StringWithMarkup", [])
-            ]
+            strings = [item.get("String", "") for item in info.get("Value", {}).get("StringWithMarkup", [])]
             name = info.get("Name")
             if name == "Pictogram(s)":
                 for item in info["Value"].get("StringWithMarkup", []):
@@ -246,9 +218,7 @@ class PubChemSource:
                         statements.append(text)
         if not (pictograms or signal or statements):
             return None
-        return HazardProfile(
-            pictograms=pictograms, signal=signal, statements=statements
-        )
+        return HazardProfile(pictograms=pictograms, signal=signal, statements=statements)
 
 
 def _find_section(sections: list[dict], heading: str) -> dict | None:

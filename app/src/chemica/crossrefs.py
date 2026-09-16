@@ -18,21 +18,72 @@ from chemica.core import Compound, CrossReference
 
 # Pharmaceutical/drug suffixes (5+ chars to reduce false positives).
 SUFFIXES = [
-    "amine", "azine", "azole", "caine", "cillin",
-    "cline", "idine", "mycin", "ophen", "orphan",
-    "profen", "ridol", "sartan", "setron", "statin",
-    "tadine", "terol", "thiazide", "tidine", "tinib",
-    "triptan", "xaban", "zepam", "zodone", "zosin",
-    "olol", "pril", "oxin",
+    "amine",
+    "azine",
+    "azole",
+    "caine",
+    "cillin",
+    "cline",
+    "idine",
+    "mycin",
+    "ophen",
+    "orphan",
+    "profen",
+    "ridol",
+    "sartan",
+    "setron",
+    "statin",
+    "tadine",
+    "terol",
+    "thiazide",
+    "tidine",
+    "tinib",
+    "triptan",
+    "xaban",
+    "zepam",
+    "zodone",
+    "zosin",
+    "olol",
+    "pril",
+    "oxin",
 ]
 
 # Common English words that happen to match a drug suffix but are not compounds.
 EXCLUDED = {
-    "determine", "examine", "famine", "machine", "routine", "pristine",
-    "magazine", "alpine", "discipline", "doctrine", "medicine", "gasoline",
-    "genuine", "imagine", "feminine", "masculine", "antine", "decline",
-    "combine", "online", "done", "gone", "bone", "tone", "zone", "phone",
-    "pine", "mine", "fine", "line", "wine", "vine", "undermine", "sunshine",
+    "determine",
+    "examine",
+    "famine",
+    "machine",
+    "routine",
+    "pristine",
+    "magazine",
+    "alpine",
+    "discipline",
+    "doctrine",
+    "medicine",
+    "gasoline",
+    "genuine",
+    "imagine",
+    "feminine",
+    "masculine",
+    "antine",
+    "decline",
+    "combine",
+    "online",
+    "done",
+    "gone",
+    "bone",
+    "tone",
+    "zone",
+    "phone",
+    "pine",
+    "mine",
+    "fine",
+    "line",
+    "wine",
+    "vine",
+    "undermine",
+    "sunshine",
     "outline",
 }
 
@@ -41,9 +92,7 @@ _IUPAC_RE = re.compile(r"\d+(?:,\d+)*-\([A-Za-z,]+\)-[A-Za-z][A-Za-z0-9-]*")
 _NUM_RE = re.compile(r"\d+-?[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)+")
 
 
-def find_cross_references(
-    text: str, resolver: Callable[[str], Compound | None]
-) -> list[CrossReference]:
+def find_cross_references(text: str, resolver: Callable[[str], Compound | None]) -> list[CrossReference]:
     """Return all compound mentions in *text* that resolve to a real compound."""
     candidates = extract_compound_mentions(text)
     return resolve_candidates(candidates, resolver)

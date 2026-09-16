@@ -59,9 +59,7 @@ _UNTERMINATED_RE = re.compile(r"\{\{[^{}]*$")
 
 # [[SeverityInteraction::Substance]] — PW's semantic annotations in the
 # 'Dangerous interactions' section; severity is the tag prefix.
-_INTERACTION_RE = re.compile(
-    r"\[\[(Dangerous|Unsafe|Uncertain)Interaction::([^\]]+)\]\]"
-)
+_INTERACTION_RE = re.compile(r"\[\[(Dangerous|Unsafe|Uncertain)Interaction::([^\]]+)\]\]")
 _INTERACTIONS_SECTION_RE = re.compile(
     r"={2,4}\s*Dangerous interactions\s*={2,4}(.*?)(?=\n={2,4}|\Z)",
     re.IGNORECASE | re.DOTALL,
@@ -122,10 +120,7 @@ class PsychonautWikiSource:
         return _BOX_CACHE[title]
 
     def _fetch_wikitext(self, page: str) -> str | None:
-        url = (
-            f"{API}?action=parse&prop=wikitext&format=json&formatversion=2"
-            f"&page={requests.utils.quote(page)}"
-        )
+        url = f"{API}?action=parse&prop=wikitext&format=json&formatversion=2&page={requests.utils.quote(page)}"
         resp = cache.get(url, timeout=15, headers=mediawiki.HEADERS)
         if resp.status_code != 200:
             return None

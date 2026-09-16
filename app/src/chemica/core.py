@@ -78,7 +78,6 @@ class Reference:
     snippet: str | None = None
 
 
-
 @dataclass(frozen=True)
 class HazardProfile:
     """GHS hazard data for the compound — pictograms, signal, H-statements."""
@@ -210,21 +209,13 @@ def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> Compo
             "pw_profile": pool.submit(_try, pw.fetch_profile, name),
         }
         if "references" not in defer:
-            tasks["references"] = pool.submit(
-                _try, PubMedSource().fetch_references, name
-            )
+            tasks["references"] = pool.submit(_try, PubMedSource().fetch_references, name)
         results = {key: future.result() for key, future in tasks.items()}
 
     ladders, effects = results["pw_profile"] or ([], [])
-    articles = [
-        article
-        for article in (results["wikipedia"], results["pw_article"])
-        if article is not None
-    ]
+    articles = [article for article in (results["wikipedia"], results["pw_article"]) if article is not None]
     cross_references = (
-        []
-        if "cross_references" in defer
-        else _resolve_cross_references(name, articles, results["compound"])
+        [] if "cross_references" in defer else _resolve_cross_references(name, articles, results["compound"])
     )
 
     return CompoundPage(
@@ -272,9 +263,7 @@ def fetch_hazards(name: str) -> HazardProfile | None:
     return _try(source.fetch_hazards, compound.cid)
 
 
-def _resolve_cross_references(
-    name: str, articles: list[Article], compound: Compound | None
-) -> list[CrossReference]:
+def _resolve_cross_references(name: str, articles: list[Article], compound: Compound | None) -> list[CrossReference]:
     from chemica.crossrefs import extract_compound_mentions
     from chemica.sources.mediawiki import page_links as wiki_links
     from chemica.sources.mediawiki import section_links
@@ -282,14 +271,10 @@ def _resolve_cross_references(
     from chemica.sources.wikipedia import API as WIKI_API
 
     source = PubChemSource()
-    article_text = "\n".join(
-        section.text for article in articles for section in article.sections
-    )
+    article_text = "\n".join(section.text for article in articles for section in article.sections)
     text_candidates = extract_compound_mentions(article_text)
 
-    wiki_article = next(
-        (a for a in articles if a.source == "wikipedia"), None
-    )
+    wiki_article = next((a for a in articles if a.source == "wikipedia"), None)
     link_candidates: set[str] = set()
     if wiki_article:
         raw_titles = wiki_links(WIKI_API, wiki_article.title, limit=500)
@@ -331,12 +316,7 @@ def _resolve_cross_references(
         # words the record doesn't even title after the word; technical
         # names (MDPV, 2-MMC) and proper nouns (Adams' catalyst) are exempt.
         title = target.raw.get("Title")
-        if (
-            title
-            and candidate.isalpha()
-            and candidate.islower()
-            and candidate.lower() not in title.lower()
-        ):
+        if title and candidate.isalpha() and candidate.islower() and candidate.lower() not in title.lower():
             continue
         if target.cid not in by_cid:
             by_cid[target.cid] = CrossReference(candidate, target)

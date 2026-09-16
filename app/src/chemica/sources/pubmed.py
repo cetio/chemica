@@ -34,10 +34,7 @@ class PubMedSource:
         papers = self._papers(query)
         if not papers:
             return None
-        sections = [
-            Section(heading=title, level=2, text=abstract)
-            for _pmid, title, abstract in papers
-        ]
+        sections = [Section(heading=title, level=2, text=abstract) for _pmid, title, abstract in papers]
         return Article(
             title=query,
             sections=sections,
@@ -88,10 +85,7 @@ class PubMedSource:
         return resp.json().get("esearchresult", {}).get("idlist", [])
 
     def _efetch(self, pmids: list[str]) -> str:
-        url = (
-            f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}"
-            f"&rettype=abstract&retmode=xml&{ID_PARAMS}"
-        )
+        url = f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}&rettype=abstract&retmode=xml&{ID_PARAMS}"
         resp = cache.get(url, timeout=15, headers=HEADERS)
         if resp.status_code != 200:
             return ""

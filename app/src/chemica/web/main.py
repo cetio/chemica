@@ -53,9 +53,7 @@ PROPERTY_ROWS: list[tuple[str, Any]] = [
 app = FastAPI(title="Chemica")
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
-templates.env.filters["subscript"] = lambda value: re.sub(
-    r"\d+", lambda m: f"<sub>{m.group()}</sub>", value or ""
-)
+templates.env.filters["subscript"] = lambda value: re.sub(r"\d+", lambda m: f"<sub>{m.group()}</sub>", value or "")
 app.mount("/static", StaticFiles(directory=str(TEMPLATES_DIR.parent / "static")), name="static")
 
 
@@ -116,9 +114,7 @@ def _segments(effect: Any) -> list[dict[str, Any]]:
     for phase, width, raw in spans:
         if not width:
             continue
-        segments.append(
-            {"phase": phase, "left": 100 * cursor / total, "width": 100 * width / total, "label": raw}
-        )
+        segments.append({"phase": phase, "left": 100 * cursor / total, "width": 100 * width / total, "label": raw})
         cursor += width
     return segments
 
@@ -141,17 +137,13 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
     page = fetch_compound_page(name, defer={"references", "cross_references"})
 
     if page.compound is None and not page.articles:
-        return templates.TemplateResponse(
-            request, "not_found.html", {"query": name}, status_code=404
-        )
+        return templates.TemplateResponse(request, "not_found.html", {"query": name}, status_code=404)
 
     compound = page.compound
 
     by_source = {a.source: a for a in page.articles if a.source}
     article = (
-        by_source.get("wikipedia")
-        or by_source.get("psychonautwiki")
-        or (page.articles[0] if page.articles else None)
+        by_source.get("wikipedia") or by_source.get("psychonautwiki") or (page.articles[0] if page.articles else None)
     )
     title = compound.name if compound else article.title
     if title[:1].isascii() and title[:1].islower():
@@ -166,14 +158,8 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
             "section_tree": _section_tree(article.sections[1:]) if article else [],
-            "dosages": [
-                replace(d, bioavailability=_clean_field(d.bioavailability))
-                for d in page.dose_ladders
-            ],
-            "timelines": [
-                {"route": e.route, "total": e.total, "segments": _segments(e)}
-                for e in page.effects
-            ],
+            "dosages": [replace(d, bioavailability=_clean_field(d.bioavailability)) for d in page.dose_ladders],
+            "timelines": [{"route": e.route, "total": e.total, "segments": _segments(e)} for e in page.effects],
         },
     )
 
@@ -181,9 +167,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
 @app.get("/compound/{name}/references", response_class=HTMLResponse)
 def references_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred PubMed panel — loaded by fragments.js after first paint."""
-    return templates.TemplateResponse(
-        request, "_references.html", {"references": fetch_references(name)}
-    )
+    return templates.TemplateResponse(request, "_references.html", {"references": fetch_references(name)})
 
 
 @app.get("/compound/{name}/cross-references")
@@ -192,9 +176,7 @@ def cross_references_fragment(request: Request, name: str) -> Response:
     xrefs = fetch_cross_references(name)
     if not xrefs:
         return Response(status_code=204)
-    return templates.TemplateResponse(
-        request, "_cross_refs.html", {"cross_references": xrefs}
-    )
+    return templates.TemplateResponse(request, "_cross_refs.html", {"cross_references": xrefs})
 
 
 _STMT_RE = re.compile(r"^(H\d+)\s*(?:\(([\d.]+)%\))?:\s*(.*?)\s*(?:\[[^\]]*\])?\s*$")
@@ -223,9 +205,7 @@ def _clean_statements(statements: list[str]) -> list[dict[str, Any]]:
 @app.get("/compound/{name}/interactions", response_class=HTMLResponse)
 def interactions_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred PW dangerous-interactions card — data or decline."""
-    return templates.TemplateResponse(
-        request, "_interactions.html", {"interactions": fetch_interactions(name)}
-    )
+    return templates.TemplateResponse(request, "_interactions.html", {"interactions": fetch_interactions(name)})
 
 
 @app.get("/compound/{name}/hazards", response_class=HTMLResponse)

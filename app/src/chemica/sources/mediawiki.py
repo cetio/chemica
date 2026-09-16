@@ -28,8 +28,16 @@ _SECTION_RE = re.compile(r"^(={2,4})\s*(.+?)\s*\1$", re.MULTILINE)
 # isExcludedHeading filtered. 'See also' additionally feeds the cross-ref
 # resolver (see section_links) before being dropped here.
 _EXCLUDED_HEADINGS = {
-    "references", "external links", "further reading", "see also", "notes",
-    "bibliography", "sources", "footnotes", "gallery", "navigation",
+    "references",
+    "external links",
+    "further reading",
+    "see also",
+    "notes",
+    "bibliography",
+    "sources",
+    "footnotes",
+    "gallery",
+    "navigation",
 }
 
 
@@ -133,27 +141,19 @@ def section_links(api: str, title: str, heading: str) -> list[str]:
 
 
 def _section_links(api: str, title: str, heading: str) -> list[str]:
-    url = (
-        f"{api}?action=parse&page={requests.utils.quote(title)}"
-        f"&prop=sections&format=json&formatversion=2"
-    )
+    url = f"{api}?action=parse&page={requests.utils.quote(title)}&prop=sections&format=json&formatversion=2"
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
     sections = resp.json().get("parse", {}).get("sections", [])
     index = next(
-        (
-            s["index"]
-            for s in sections
-            if s.get("line", "").strip().lower() == heading.lower()
-        ),
+        (s["index"] for s in sections if s.get("line", "").strip().lower() == heading.lower()),
         None,
     )
     if index is None:
         return []
     url = (
-        f"{api}?action=parse&page={requests.utils.quote(title)}"
-        f"&prop=links&section={index}&format=json&formatversion=2"
+        f"{api}?action=parse&page={requests.utils.quote(title)}&prop=links&section={index}&format=json&formatversion=2"
     )
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:

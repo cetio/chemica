@@ -23,11 +23,7 @@ import requests
 
 _TTL_SECONDS = 24 * 60 * 60
 
-_CACHE_DIR = (
-    Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
-    / "chemica"
-    / "http"
-)
+_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "chemica" / "http"
 
 
 def get(url: str, **kwargs) -> requests.Response:

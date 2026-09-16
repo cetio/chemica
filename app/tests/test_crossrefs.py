@@ -7,10 +7,7 @@ from chemica.crossrefs import extract_compound_mentions, find_cross_references
 
 
 def test_extract_compound_mentions_finds_drug_suffixes():
-    text = (
-        "Aspirin is related to ketamine and ibuprofen. "
-        "Machine learning and medicine are not compounds."
-    )
+    text = "Aspirin is related to ketamine and ibuprofen. Machine learning and medicine are not compounds."
     mentions = extract_compound_mentions(text)
     assert "ketamine" in mentions
     assert "ibuprofen" in mentions

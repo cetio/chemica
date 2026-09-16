@@ -96,8 +96,7 @@ def _record_wikipedia(query: str) -> None:
 
     # extracts endpoint — keyed by resolved title (full sectioned article)
     extracts_url = (
-        f"{WIKI_API}?action=query&prop=extracts&titles={quote(title)}"
-        f"&format=json&explaintext=1&exsectionformat=wiki"
+        f"{WIKI_API}?action=query&prop=extracts&titles={quote(title)}&format=json&explaintext=1&exsectionformat=wiki"
     )
     extracts_resp = requests.get(extracts_url, timeout=15, headers=HEADERS)
     if extracts_resp.status_code == 200:
@@ -125,8 +124,7 @@ def _record_psychonaut(query: str) -> None:
 
     # extracts endpoint — keyed by resolved title
     extracts_url = (
-        f"{PW_API}?action=query&prop=extracts&titles={quote(title)}"
-        f"&format=json&explaintext=1&exsectionformat=wiki"
+        f"{PW_API}?action=query&prop=extracts&titles={quote(title)}&format=json&explaintext=1&exsectionformat=wiki"
     )
     extracts_resp = requests.get(extracts_url, timeout=15, headers=HEADERS)
     if extracts_resp.status_code == 200:
@@ -147,10 +145,7 @@ def _record_pubmed(query: str) -> None:
     pubmed_dir.mkdir(parents=True, exist_ok=True)
 
     # esearch endpoint — keyed by compound name
-    search_url = (
-        f"{EUTILS}/esearch.fcgi?db=pubmed&term={quote(query)}"
-        f"&retmax=5&retmode=json&tool=chemica&email=cet"
-    )
+    search_url = f"{EUTILS}/esearch.fcgi?db=pubmed&term={quote(query)}&retmax=5&retmode=json&tool=chemica&email=cet"
     search_resp = requests.get(search_url, timeout=15, headers=HEADERS)
     if search_resp.status_code != 200:
         return
@@ -162,14 +157,11 @@ def _record_pubmed(query: str) -> None:
 
     # efetch endpoint — keyed by the PMID list (raw XML, stored as text)
     fetch_url = (
-        f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}"
-        f"&rettype=abstract&retmode=xml&tool=chemica&email=cet"
+        f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}&rettype=abstract&retmode=xml&tool=chemica&email=cet"
     )
     fetch_resp = requests.get(fetch_url, timeout=15, headers=HEADERS)
     if fetch_resp.status_code == 200:
-        (pubmed_dir / f"efetch_{','.join(pmids)}.xml").write_text(
-            fetch_resp.text, encoding="utf-8"
-        )
+        (pubmed_dir / f"efetch_{','.join(pmids)}.xml").write_text(fetch_resp.text, encoding="utf-8")
 
 
 def _write(path: Path, payload: object) -> None:
