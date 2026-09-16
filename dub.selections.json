@@ -1,9 +1,9 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"akashi": "1.0.0",
-		"gid": "0.9.8",
-		"intel-intrinsics": "1.13.0",
-		"intuit": "0.3.0"
+		"akashi": "1.1.1",
+		"gid": "0.9.13",
+		"intuit": "1.3.1",
+		"unit-threaded": "2.2.5"
 	}
 }

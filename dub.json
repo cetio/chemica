@@ -4,9 +4,9 @@
 	],
 	"copyright": "Copyright 2025, cet",
 	"dependencies": {
-		"gid:gtk4": "0.9.8",
-		"intuit": "~>0.3.0",
-		"akashi": "*"
+		"akashi": "~>1.1.1",
+		"gid:gtk4": "~>0.9.13",
+		"intuit": "~>1.3.1"
 	},
 	"description": ".",
 	"license": "AGPL-3.0-only",
