@@ -298,10 +298,7 @@ class PubChemSource:
         """2D-structural neighbors — the related-compounds backstop for
         compounds whose Wikipedia article has few outlinks (thin RC pages).
         PubChem returns the query CID first; caller filters it."""
-        url = (
-            f"{PUG}/compound/fastsimilarity_2d/cid/{cid}/cids/JSON"
-            f"?MaxRecords={limit}"
-        )
+        url = f"{PUG}/compound/fastsimilarity_2d/cid/{cid}/cids/JSON?MaxRecords={limit}"
         resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             return []

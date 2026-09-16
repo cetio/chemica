@@ -406,11 +406,7 @@ def _resolve_cross_references(name: str, articles: list[Article], compound: Comp
     # Wikipedia outlinks) get 2D-similarity neighbors so the rail isn't
     # empty where the graph is sparse.
     if len(by_cid) < 6 and compound is not None and compound.cid is not None:
-        sim_cids = [
-            c
-            for c in source.fetch_similar(compound.cid, limit=10)
-            if c != compound.cid and c not in by_cid
-        ]
+        sim_cids = [c for c in source.fetch_similar(compound.cid, limit=10) if c != compound.cid and c not in by_cid]
         for sim_cid, sim in source.fetch_by_cids(sim_cids).items():
             by_cid[sim_cid] = CrossReference(sim.name, sim)
             if len(by_cid) >= 8:

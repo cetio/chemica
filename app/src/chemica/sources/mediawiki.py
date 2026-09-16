@@ -141,10 +141,7 @@ def _page_links(api: str, title: str, limit: int) -> list[str]:
 def page_images(api: str, title: str) -> list[str]:
     """Image filenames used by the article — UI chrome (icons, logos) stays
     in the list; the caller filters by name or renders what survives."""
-    url = (
-        f"{api}?action=parse&page={requests.utils.quote(title)}"
-        f"&prop=images&format=json&formatversion=2"
-    )
+    url = f"{api}?action=parse&page={requests.utils.quote(title)}&prop=images&format=json&formatversion=2"
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
