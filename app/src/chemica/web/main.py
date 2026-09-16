@@ -10,8 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import requests
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -103,4 +104,18 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "references": page.references,
             "cross_references": page.cross_references,
         },
+    )
+
+
+@app.get("/structure/{cid}.png")
+def structure_image(cid: int) -> Response:
+    """Proxy PubChem's structure PNG so browser rate-limits don't blank it."""
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
+    resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
+    if resp.status_code != 200:
+        return Response(status_code=resp.status_code)
+    return Response(
+        content=resp.content,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
     )

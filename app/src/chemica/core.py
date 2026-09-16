@@ -189,7 +189,7 @@ def fetch_compound_page(name: str) -> CompoundPage:
     )
     link_candidates: set[str] = set()
     if wiki_article:
-        raw_titles = wiki_links(WIKI_API, wiki_article.title)
+        raw_titles = wiki_links(WIKI_API, wiki_article.title, limit=500)
         # A link is a real mention only if it appears in the article text,
         # filtering out navbox/template-only links (e.g. the Stimulants box).
         text_lower = article_text.lower()
@@ -201,9 +201,10 @@ def fetch_compound_page(name: str) -> CompoundPage:
                 break
     link_refs = resolve_candidates(link_candidates, resolver)
 
-    # Merge, preferring link-based references and keeping names stable.
+    # Merge: link_refs first — real Wikipedia links outrank regex guesses
+    # on CID collision. by_cid keeps the first occurrence per compound.
     by_cid: dict[int, CrossReference] = {}
-    for ref in text_candidates + link_refs:
+    for ref in link_refs + text_candidates:
         if ref.compound.cid is not None and ref.compound.cid not in by_cid:
             by_cid[ref.compound.cid] = ref
     cross_references = list(by_cid.values())[:12]

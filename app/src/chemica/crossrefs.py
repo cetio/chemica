@@ -84,17 +84,17 @@ def extract_compound_mentions(text: str) -> set[str]:
     names: set[str] = set()
 
     # Drug-suffix heuristic.
-    for match in _WORD_RE.finditer(text[:2000]):
+    for match in _WORD_RE.finditer(text):
         word = match.group(0)
         if _has_drug_suffix(word):
             names.add(word)
 
     # IUPAC-style names.
-    for match in _IUPAC_RE.finditer(text[:2000]):
+    for match in _IUPAC_RE.finditer(text):
         names.add(match.group(0))
 
     # Number-prefixed compounds (2C-B, 5-MeO-DMT, etc.).
-    for match in _NUM_RE.finditer(text[:2000]):
+    for match in _NUM_RE.finditer(text):
         names.add(match.group(0))
 
     return names
