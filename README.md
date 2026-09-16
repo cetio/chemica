@@ -69,8 +69,6 @@ The Python package lives under `app/src/chemica/`:
 - `crossrefs.py` — related-compound resolution, batched to stay off the request path.
 - `cache.py` — persistent disk cache for upstream HTTP responses.
 
-The legacy D/GTK desktop client remains under `source/` for reference; it is not built.
-
 ## License
 
 Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt). Third-party assets and their

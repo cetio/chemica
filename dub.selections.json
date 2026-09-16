@@ -1,9 +1,0 @@
-{
-	"fileVersion": 1,
-	"versions": {
-		"akashi": "1.1.1",
-		"gid": "0.9.13",
-		"intuit": "1.3.1",
-		"unit-threaded": "2.2.5"
-	}
-}
