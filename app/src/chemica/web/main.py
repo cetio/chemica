@@ -8,6 +8,7 @@ pluggable and whose seam the desktop app reuses.
 from __future__ import annotations
 
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -171,9 +172,15 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
 def structure_image(cid: int) -> Response:
     """Proxy PubChem's structure PNG so browser rate-limits don't blank it."""
     url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
-    resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
-    if resp.status_code != 200:
-        return Response(status_code=resp.status_code)
+    resp = None
+    for attempt in range(3):
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
+        if resp.status_code not in (429, 503):
+            break
+        if attempt < 2:
+            time.sleep(1.5 * (attempt + 1))
+    if resp is None or resp.status_code != 200:
+        return Response(status_code=503)
     return Response(
         content=resp.content,
         media_type="image/png",
