@@ -533,7 +533,14 @@ details.section-expander details.section-expander summary
     color: var(--dim);
 }
 
-.profile-halflife li { margin-bottom: 3px; }
+.profile-halflife li
+{
+    margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
 .profile-halflife li::marker { color: var(--line); }
 
 .route-bioavail

@@ -24,7 +24,7 @@
   {% if profile.half_life %}
   <ul class="profile-halflife">
     {% for line in profile.half_life %}
-    <li>{{ line }}</li>
+    <li title="{{ line }}">{{ line }}</li>
     {% endfor %}
   </ul>
   {% endif %}
