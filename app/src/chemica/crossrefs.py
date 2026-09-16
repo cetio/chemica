@@ -68,9 +68,10 @@ def resolve_candidates(
             name, compound = future.result()
             if compound is None:
                 continue
-            if id(compound) in seen:
+            key = compound.cid if compound.cid is not None else id(compound)
+            if key in seen:
                 continue
-            seen.add(id(compound))
+            seen.add(key)
             ret.append(CrossReference(name, compound))
     return ret
 
