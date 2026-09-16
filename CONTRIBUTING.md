@@ -74,7 +74,7 @@ slot — `outerHTML` replacement deletes the slot node.
 
 Third-party browser assets are vendored under `app/src/chemica/web/static/`
 rather than loaded from a CDN: `3dmol-min.js` (BSD-3, see
-`3DMOL-LICENSE`) and the GHS pictogram SVGs (UN GHS standard images). Keep it
+`3Dmol-LICENSE.txt`) and the GHS pictogram SVGs (UN GHS standard images). Keep it
 that way — no runtime external script/img dependencies.
 
 ## Conventions
