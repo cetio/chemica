@@ -84,6 +84,9 @@ def _fixture_for_url(url: str) -> Path | None:
     not-found compound doesn't replay another compound's data.
     """
     if "pubchem.ncbi.nlm.nih.gov" in url:
+        if "pug_view" in url:
+            cid = _extract_path_segment(url, "/compound/", "/JSON")
+            return FIXTURE_DIR / "pubchem" / f"pugview_{cid}.json"
         if "/cids/JSON" in url:
             name = _extract_path_segment(url, "/compound/name/", "/cids")
             return FIXTURE_DIR / "pubchem" / f"cids_{name}.json"

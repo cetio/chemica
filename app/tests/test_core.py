@@ -228,6 +228,18 @@ def test_fetch_compound_page_caffeine(recording):
     assert 15872156 in xref_cids  # Methylliberine
 
 
+def test_fetch_hazards_caffeine(recording):
+    # PUG-View GHS Classification: pictograms dedupe across notifiers,
+    # strictest signal wins, statements keep their notifier %.
+    from chemica.core import fetch_hazards
+
+    hazards = fetch_hazards("caffeine")
+    assert hazards is not None
+    assert hazards.signal == "Danger"
+    assert "GHS07" in hazards.pictograms
+    assert any(s.startswith("H302") for s in hazards.statements)
+
+
 def test_parse_sections_filters_tail_headings():
     # Meta sections (See also, Notes, References, ...) are not article content
     # — the D app filtered the same list. An excluded heading's subsections go
