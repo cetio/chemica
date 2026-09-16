@@ -9,7 +9,7 @@ import gtk.gesture_click;
 import gtk.types : Orientation, Align;
 
 import gui.article.expander;
-import akashi.page : Page, Section;
+import akashi.page : Page;
 import akashi.psychonaut : getReports, getPagesByTitle;
 
 class Reports : Expander

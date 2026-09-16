@@ -28,10 +28,10 @@ import gui.window : ChemicaWindow;
 import gui.conformer.view;
 
 import akashi.pubchem;
-import akashi.page : Page, Section, resolvePage;
+import akashi.page : Page, resolvePage;
 import akashi.text.ast : Document, Node, NodeType;
 import akashi.psychonaut : DosageResult;
-import infer.ease : ease, SectionCallback, HeadingsCallback;
+import infer.ease : ease, Section, SectionCallback, HeadingsCallback;
 import infer.resolve : extractCompoundNames;
 import infer.config : config;
 

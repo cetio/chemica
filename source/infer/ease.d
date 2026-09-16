@@ -5,10 +5,13 @@ import std.string : strip, toLower;
 import std.array : join;
 import std.algorithm : min;
 import std.conv : to;
+import std.json : JSONValue;
+import std.math : sqrt;
 
 import intuit;
 import infer.config;
-import akashi.page : Page, Section;
+import akashi.page : Page;
+import akashi.text.ast : Document, Node;
 
 private:
 
@@ -46,6 +49,26 @@ bool isExcluded(string heading)
     return false;
 }
 
+float cosineSimilarity(float[] a, float[] b)
+{
+    if (a.length == 0 || a.length != b.length)
+        return 0.0f;
+
+    float dot;
+    float na;
+    float nb;
+    foreach (i; 0 .. a.length)
+    {
+        dot += a[i] * b[i];
+        na += a[i] * a[i];
+        nb += b[i] * b[i];
+    }
+    if (na == 0 || nb == 0)
+        return 0.0f;
+
+    return dot / (sqrt(na) * sqrt(nb));
+}
+
 struct SourceSection
 {
     string heading;
@@ -54,6 +77,18 @@ struct SourceSection
     string origin;
     float[] embedding;
     float[] contentEmbedding;
+}
+
+Section[] pageSections(Page page)
+{
+    Section[] ret;
+
+    Document doc = page.document();
+    Node[] nodes = doc.sections();
+    foreach (ref node; nodes)
+        ret ~= Section(node.text, doc.extractText(node), cast(int) node.level);
+
+    return ret;
 }
 
 SourceSection[] extractSections(Page[] pages)
@@ -75,7 +110,7 @@ SourceSection[] extractSections(Page[] pages)
             writeln("[Ease]   + Introduction (", preamble.length, " chars)");
         }
 
-        auto sections = page.sections;
+        Section[] sections = pageSections(page);
 
         string currentParent;
         string currentContent;
@@ -298,7 +333,7 @@ Section mergeViaLLM(string heading, int level, SourceSection[] group)
 
     try
     {
-        auto model = client.fetch(config.chatModel);
+        ModelConfig model = client.config(config.chatModel);
         model.maxTokens = 2048;
         model.temperature = 0.2;
 
@@ -338,6 +373,13 @@ Section mergeViaLLM(string heading, int level, SourceSection[] group)
 }
 
 public:
+
+struct Section
+{
+    string heading;
+    string content;
+    int level;
+}
 
 alias SectionCallback = void delegate(size_t index, Section sec);
 alias HeadingsCallback = void delegate(string[] headings);
