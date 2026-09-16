@@ -75,6 +75,39 @@
   </section>
   {% endif %}
 
+  {% if effects %}
+  <section class="panel effects-panel">
+    <h2 class="panel-heading">Effects timeline</h2>
+    <p class="panel-source">Source: PsychonautWiki</p>
+    <table class="dosage-table">
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Onset</th>
+          <th>Comeup</th>
+          <th>Peak</th>
+          <th>Offset</th>
+          <th>Total</th>
+          <th>Aftereffects</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for effect in effects %}
+        <tr>
+          <td>{{ effect.route }}</td>
+          <td>{{ effect.onset or '--' }}</td>
+          <td>{{ effect.comeup or '--' }}</td>
+          <td>{{ effect.peak or '--' }}</td>
+          <td>{{ effect.offset or '--' }}</td>
+          <td>{{ effect.total or '--' }}</td>
+          <td>{{ effect.aftereffects or '--' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
   {% if references %}
   <section class="panel references-panel">
     <h2 class="panel-heading">References</h2>

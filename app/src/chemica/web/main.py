@@ -101,6 +101,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
             "dosages": page.dose_ladders,
+            "effects": page.effects,
             "references": references,
             "cross_references": page.cross_references,
         },
