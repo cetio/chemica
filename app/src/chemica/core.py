@@ -279,6 +279,19 @@ def _resolve_cross_references(
             continue
         if compound is not None and target.cid == compound.cid:
             continue
+        # Class nouns ('insecticide') resolve to a representative compound
+        # (indoxacarb) via PubChem's depositor synonyms — the card would show
+        # a specific molecule under a generic label. Drop plain lowercase
+        # words the record doesn't even title after the word; technical
+        # names (MDPV, 2-MMC) and proper nouns (Adams' catalyst) are exempt.
+        title = target.raw.get("Title")
+        if (
+            title
+            and candidate.isalpha()
+            and candidate.islower()
+            and candidate.lower() not in title.lower()
+        ):
+            continue
         if target.cid not in by_cid:
             by_cid[target.cid] = CrossReference(candidate, target)
     return list(by_cid.values())[:12]

@@ -110,7 +110,7 @@ class PubChemSource:
 
     def _properties_batch(self, cids: list[int]) -> dict[int, dict[str, Any]]:
         """One call for many CIDs — PubChem accepts a comma-separated list."""
-        props = "MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
+        props = "Title,MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
         url = f"{PUG}/compound/cid/{','.join(str(c) for c in cids)}/property/{props}/JSON"
         resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
