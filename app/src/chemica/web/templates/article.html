@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% macro render_section(section, children) %}
-<details class="section-expander">
+{% macro render_section(section, children, anchor="") %}
+<details class="section-expander"{% if anchor %} id="{{ anchor }}"{% endif %}>
   <summary class="section-heading">{{ section.heading }}</summary>
   <div class="section-body">
     {% for paragraph in section.text.split("\n\n") %}
@@ -23,6 +23,17 @@
   </nav>
 
   <div class="article-columns">
+    <nav class="toc-rail">
+      <div class="toc-title">Contents</div>
+      <ol class="toc-list">
+        {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
+        {% if timelines %}<li><a href="#panel-effects">Effects timeline</a></li>{% endif %}
+        {% for section, children in section_tree %}
+          <li><a href="#sec-{{ loop.index }}">{{ section.heading }}</a></li>
+        {% endfor %}
+        <li><a href="#panel-references">References</a></li>
+      </ol>
+    </nav>
     <div class="article-main">
       {% if article and article.sections %}
         {% for paragraph in article.sections[0].text.split("\n\n") %}
@@ -31,7 +42,7 @@
       {% endif %}
 
       {% if dosages %}
-      <section class="panel dosage-panel">
+      <section class="panel dosage-panel" id="panel-dosage">
         <h2 class="panel-heading">Dosage <span class="source-tag source-pw">PsychonautWiki</span></h2>
         <table class="dosage-table">
           <thead>
@@ -61,7 +72,7 @@
       {% endif %}
 
       {% if timelines %}
-      <section class="panel effects-panel">
+      <section class="panel effects-panel" id="panel-effects">
         <h2 class="panel-heading">Effects timeline <span class="source-tag source-pw">PsychonautWiki</span></h2>
         <div class="gantt">
           {% for row in timelines %}
@@ -89,10 +100,10 @@
       {% endif %}
 
       {% for section, children in section_tree %}
-        {{ render_section(section, children) }}
+        {{ render_section(section, children, "sec-" ~ loop.index) }}
       {% endfor %}
 
-      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/references">
+      <div class="fragment-slot" id="panel-references" data-fragment="/compound/{{ name | urlencode }}/references">
         <div class="fragment-loading">Loading references&#8230;</div>
       </div>
     </div>
@@ -138,6 +149,7 @@
   </div>
 </div>
 <script src="/static/fragments.js" defer></script>
+<script src="/static/toc.js" defer></script>
 {% if compound and compound.cid %}
 <script src="/static/3dmol-min.js"></script>
 <script src="/static/viewer3d.js" defer></script>
