@@ -251,6 +251,33 @@ def structure_sdf(cid: int) -> Response:
     )
 
 
+@app.get("/image/{filename}")
+def article_image(filename: str, width: int = 400) -> Response:
+    """Proxy a Wikipedia/Commons file — Special:FilePath serves a scaled
+    thumbnail, so article figures never hotlink upload.wikimedia.org."""
+    if ".." in filename or "/" in filename:
+        return Response(status_code=400)
+    width = min(max(width, 64), 1200)
+    url = (
+        "https://en.wikipedia.org/wiki/Special:FilePath/"
+        f"{requests.utils.quote(filename)}?width={width}"
+    )
+    resp = None
+    for attempt in range(3):
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
+        if resp.status_code not in (429, 503):
+            break
+        if attempt < 2:
+            time.sleep(1.5 * (attempt + 1))
+    if resp is None or resp.status_code != 200:
+        return Response(status_code=503)
+    return Response(
+        content=resp.content,
+        media_type=resp.headers.get("Content-Type", "image/*"),
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/structure/{cid}.png")
 def structure_image(cid: int) -> Response:
     """Proxy PubChem's structure PNG so browser rate-limits don't blank it."""
