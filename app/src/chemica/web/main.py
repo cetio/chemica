@@ -7,6 +7,7 @@ pluggable and whose seam the desktop app reuses.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,9 @@ PROPERTY_ROWS: list[tuple[str, Any]] = [
 app = FastAPI(title="Chemica")
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.filters["subscript"] = lambda value: re.sub(
+    r"\d+", lambda m: f"<sub>{m.group()}</sub>", value or ""
+)
 app.mount("/static", StaticFiles(directory=str(TEMPLATES_DIR.parent / "static")), name="static")
 
 
@@ -60,6 +64,54 @@ def _infobox_groups(compound: Compound) -> list[tuple[str, list[tuple[str, str]]
         ("Identifiers", [(label, _display(get(compound))) for label, get in IDENTIFIER_ROWS]),
         ("Properties", [(label, _display(get(compound))) for label, get in PROPERTY_ROWS]),
     ]
+
+
+def _section_tree(sections: list[Any]) -> list[tuple[Any, list]]:
+    """Nest flat sections by heading level into (section, children) pairs."""
+    tree: list[tuple[Any, list]] = []
+    stack: list[tuple[int, list]] = [(-1, tree)]
+    for section in sections:
+        while stack[-1][0] >= section.level:
+            stack.pop()
+        node = (section, [])
+        stack[-1][1].append(node)
+        stack.append((section.level, node[1]))
+    return tree
+
+
+_PHASES = ("onset", "comeup", "peak", "offset", "aftereffects")
+
+
+def _minutes(text: str | None) -> float | None:
+    """Mean of a source range string in minutes ("5 - 10 minutes" -> 7.5)."""
+    if not text:
+        return None
+    nums = re.findall(r"\d+(?:\.\d+)?", text)
+    if not nums:
+        return None
+    value = sum(float(n) for n in nums) / len(nums)
+    if "hour" in text:
+        return value * 60
+    if "second" in text:
+        return value / 60
+    return value
+
+
+def _segments(effect: Any) -> list[dict[str, Any]]:
+    spans = [(phase, _minutes(getattr(effect, phase)), getattr(effect, phase)) for phase in _PHASES]
+    total = sum(width for _, width, _ in spans if width)
+    if not total:
+        return []
+    cursor = 0.0
+    segments = []
+    for phase, width, raw in spans:
+        if not width:
+            continue
+        segments.append(
+            {"phase": phase, "left": 100 * cursor / total, "width": 100 * width / total, "label": raw}
+        )
+        cursor += width
+    return segments
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -92,15 +144,22 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
         or by_source.get("psychonautwiki")
         or (page.articles[0] if page.articles else None)
     )
+    title = compound.name if compound else article.title
+    title = title[:1].upper() + title[1:]
     return templates.TemplateResponse(
         request,
         "article.html",
         {
+            "title": title,
             "compound": compound,
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
+            "section_tree": _section_tree(article.sections[1:]) if article else [],
             "dosages": page.dose_ladders,
-            "effects": page.effects,
+            "timelines": [
+                {"route": e.route, "total": e.total, "segments": _segments(e)}
+                for e in page.effects
+            ],
             "references": page.references,
             "cross_references": page.cross_references,
         },

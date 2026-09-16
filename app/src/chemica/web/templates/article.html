@@ -1,141 +1,162 @@
 {% extends "base.html" %}
+{% macro render_section(section, children) %}
+<details class="section-expander">
+  <summary class="section-heading">{{ section.heading }}</summary>
+  <div class="section-body">
+    {% for paragraph in section.text.split("\n\n") %}
+      {% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}
+    {% endfor %}
+    {% for child, grandchildren in children %}
+      {{ render_section(child, grandchildren) }}
+    {% endfor %}
+  </div>
+</details>
+{% endmacro %}
 {% block content %}
 <div class="article">
   <nav class="article-nav">
     <a class="nav-link" href="/">&#8592; search</a>
-    <h1 class="article-title">{{ compound.name if compound else article.title }}</h1>
+    <h1 class="article-title">{{ title }}</h1>
+    {% if compound and compound.formula %}
+      <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
+    {% endif %}
   </nav>
 
   <div class="article-columns">
     <div class="article-main">
-      {% if article %}
-        {% for section in article.sections %}
-          <h2 class="section-heading">{{ section.heading }}</h2>
-          {% for paragraph in section.text.split("\n\n") %}
-            {% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}
-          {% endfor %}
+      {% if article and article.sections %}
+        {% for paragraph in article.sections[0].text.split("\n\n") %}
+          {% if paragraph.strip() %}<p class="lead">{{ paragraph }}</p>{% endif %}
         {% endfor %}
-      {% else %}
-        <p class="dim">No article found for this compound.</p>
+      {% endif %}
+
+      {% if dosages %}
+      <section class="panel dosage-panel">
+        <h2 class="panel-heading">Dosage <span class="source-tag source-pw">PsychonautWiki</span></h2>
+        <table class="dosage-table">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Threshold</th>
+              <th>Light</th>
+              <th>Common</th>
+              <th>Strong</th>
+              <th>Heavy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for dose in dosages %}
+            <tr>
+              <td class="route-cell">{{ dose.route }}</td>
+              <td>{{ dose.threshold }}</td>
+              <td>{{ dose.light }}</td>
+              <td>{{ dose.common }}</td>
+              <td>{{ dose.strong }}</td>
+              <td>{{ dose.heavy }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if timelines %}
+      <section class="panel effects-panel">
+        <h2 class="panel-heading">Effects timeline <span class="source-tag source-pw">PsychonautWiki</span></h2>
+        <div class="gantt">
+          {% for row in timelines %}
+          <div class="gantt-row">
+            <div class="gantt-label">{{ row.route }}</div>
+            <div class="gantt-track">
+              {% for seg in row.segments %}
+              <div class="gantt-seg phase-{{ seg.phase }}"
+                   style="left:{{ '%.2f' | format(seg.left) }}%;width:{{ '%.2f' | format(seg.width) }}%"
+                   title="{{ seg.phase }}: {{ seg.label }}">
+                <span class="gantt-seg-label">{{ seg.label }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% if row.total %}<div class="gantt-total">{{ row.total }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <div class="gantt-legend">
+            {% for phase in ["onset", "comeup", "peak", "offset", "aftereffects"] %}
+            <span class="gantt-key"><i class="gantt-swatch phase-{{ phase }}"></i>{{ phase }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
+      {% for section, children in section_tree %}
+        {{ render_section(section, children) }}
+      {% endfor %}
+
+      {% if references %}
+      <section class="panel references-panel">
+        <h2 class="panel-heading">References <span class="source-tag source-pubmed">PubMed</span></h2>
+        <ul class="reference-list">
+          {% for ref in references %}
+          <li class="reference-item">
+            {% if ref.url %}
+              <a href="{{ ref.url }}">{{ ref.title }}</a>
+            {% else %}
+              {{ ref.title }}
+            {% endif %}
+            {% if ref.snippet %}<div class="reference-snippet">{{ ref.snippet }}</div>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
       {% endif %}
     </div>
 
-    {% if compound %}
-    <aside class="infobox">
-      <div class="infobox-name">{{ compound.name }}</div>
-      {% if compound.cid %}
-        <img class="structure-image"
-             src="/structure/{{ compound.cid }}.png"
-             alt="2D structure of {{ compound.name }}"
-             loading="lazy">
+    <aside class="rail">
+      {% if compound %}
+      <div class="infobox">
+        <div class="infobox-name">{{ compound.name }}</div>
+        {% if compound.cid %}
+          <img class="structure-image"
+               src="/structure/{{ compound.cid }}.png"
+               alt="2D structure of {{ compound.name }}"
+               loading="lazy">
+        {% endif %}
+        {% for group_name, rows in infobox %}
+          <h3 class="infobox-group">{{ group_name }}</h3>
+          <table class="infobox-table">
+            {% for label, value in rows %}
+            <tr><th>{{ label }}</th><td>{{ value }}</td></tr>
+            {% endfor %}
+          </table>
+        {% endfor %}
+        {% if article and article.url %}
+          <p class="infobox-source">Source: <a href="{{ article.url }}">{{ article.title }}</a></p>
+        {% endif %}
+      </div>
       {% endif %}
-      {% for group_name, rows in infobox %}
-        <h3 class="infobox-group">{{ group_name }}</h3>
-        <table class="infobox-table">
-          {% for label, value in rows %}
-          <tr><th>{{ label }}</th><td>{{ value }}</td></tr>
+
+      {% if cross_references %}
+      <div class="panel cross-refs-panel">
+        <h2 class="panel-heading rail-heading">Related compounds</h2>
+        <ul class="cross-ref-list">
+          {% for xref in cross_references %}
+          <li class="cross-ref-item">
+            <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
+            {% if xref.compound and xref.compound.cid %}
+            <div class="xref-card">
+              <img src="/structure/{{ xref.compound.cid }}.png" alt="" loading="lazy">
+              <div class="xref-card-name">{{ xref.name }}</div>
+              {% if xref.compound.formula %}
+              <div class="xref-card-formula">{{ xref.compound.formula | subscript | safe }}</div>
+              {% endif %}
+            </div>
+            {% endif %}
+          </li>
           {% endfor %}
-        </table>
-      {% endfor %}
-      {% if article and article.url %}
-        <p class="infobox-source">Source: <a href="{{ article.url }}">{{ article.title }}</a></p>
+        </ul>
+      </div>
       {% endif %}
     </aside>
-    {% endif %}
   </div>
-
-  {% if dosages %}
-  <section class="panel dosage-panel">
-    <h2 class="panel-heading">Dosage</h2>
-    <p class="panel-source">Source: PsychonautWiki</p>
-    <table class="dosage-table">
-      <thead>
-        <tr>
-          <th>Route</th>
-          <th>Threshold</th>
-          <th>Light</th>
-          <th>Common</th>
-          <th>Strong</th>
-          <th>Heavy</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for dose in dosages %}
-        <tr>
-          <td>{{ dose.route }}</td>
-          <td>{{ dose.threshold }}</td>
-          <td>{{ dose.light }}</td>
-          <td>{{ dose.common }}</td>
-          <td>{{ dose.strong }}</td>
-          <td>{{ dose.heavy }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-  {% endif %}
-
-  {% if effects %}
-  <section class="panel effects-panel">
-    <h2 class="panel-heading">Effects timeline</h2>
-    <p class="panel-source">Source: PsychonautWiki</p>
-    <table class="dosage-table">
-      <thead>
-        <tr>
-          <th>Route</th>
-          <th>Onset</th>
-          <th>Comeup</th>
-          <th>Peak</th>
-          <th>Offset</th>
-          <th>Total</th>
-          <th>Aftereffects</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for effect in effects %}
-        <tr>
-          <td>{{ effect.route }}</td>
-          <td>{{ effect.onset or '--' }}</td>
-          <td>{{ effect.comeup or '--' }}</td>
-          <td>{{ effect.peak or '--' }}</td>
-          <td>{{ effect.offset or '--' }}</td>
-          <td>{{ effect.total or '--' }}</td>
-          <td>{{ effect.aftereffects or '--' }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-  {% endif %}
-
-  {% if references %}
-  <section class="panel references-panel">
-    <h2 class="panel-heading">References</h2>
-    <p class="panel-source">Source: PubMed</p>
-    <ul class="reference-list">
-      {% for ref in references %}
-      <li class="reference-item">
-        {% if ref.url %}
-          <a href="{{ ref.url }}">{{ ref.title }}</a>
-        {% else %}
-          {{ ref.title }}
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
-  {% if cross_references %}
-  <section class="panel cross-refs-panel">
-    <h2 class="panel-heading">Related compounds</h2>
-    <ul class="cross-ref-list">
-      {% for xref in cross_references %}
-      <li class="cross-ref-item">
-        <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </section>
-  {% endif %}
+</div>
 {% endblock %}

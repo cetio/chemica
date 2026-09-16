@@ -7,6 +7,12 @@
     --text: #e6e8ec;
     --dim: #98a0ad;
     --accent: #7aa2f7;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+    --dose-threshold: rgba(34, 197, 94, 0.16);
+    --dose-light: rgba(132, 204, 22, 0.16);
+    --dose-common: rgba(234, 179, 8, 0.16);
+    --dose-strong: rgba(249, 115, 22, 0.18);
+    --dose-heavy: rgba(239, 68, 68, 0.22);
 }
 
 * { box-sizing: border-box; }
@@ -66,18 +72,88 @@ button
 
 button:hover { border-color: var(--accent); }
 
-.article { max-width: 980px; margin: 0 auto; padding: 20px 24px 60px; }
+.article { max-width: 1120px; margin: 0 auto; padding: 20px 24px 60px; }
 
 .nav-link { color: var(--dim); text-decoration: none; }
 .nav-link:hover { text-decoration: none; color: var(--accent); }
 
-.article-title { font-size: 26px; margin: 0; font-weight: 700; }
+.article-title { font-size: 28px; margin: 4px 0 0; font-weight: 700; }
 
-.article-body { display: flex; gap: 28px; align-items: flex-start; }
+.article-formula
+{
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--dim);
+    margin-top: 2px;
+}
+
+.article-columns { display: flex; gap: 28px; align-items: flex-start; margin-top: 8px; }
 
 .article-main { flex: 1; min-width: 0; }
-.article-main .section-heading { font-size: 20px; margin: 22px 0 6px; font-weight: 650; }
+.article-main .lead { font-size: 15.5px; }
 .article-main p { margin: 0 0 12px; }
+
+.section-heading { font-size: 20px; margin: 22px 0 6px; font-weight: 650; }
+
+details.section-expander
+{
+    border-top: 1px solid var(--line);
+    padding: 2px 0;
+}
+
+details.section-expander summary
+{
+    cursor: pointer;
+    list-style: none;
+    font-size: 17px;
+    font-weight: 650;
+    padding: 9px 6px;
+    color: var(--dim);
+    border-radius: 6px;
+    user-select: none;
+}
+
+details.section-expander summary::-webkit-details-marker { display: none; }
+
+details.section-expander summary::before
+{
+    content: "\25B8";
+    display: inline-block;
+    width: 16px;
+    color: var(--accent);
+    transition: transform 0.12s ease;
+}
+
+details.section-expander summary:hover { color: var(--text); background: var(--panel); }
+details.section-expander[open] summary { color: var(--text); }
+details.section-expander[open] summary::before { transform: rotate(90deg); }
+
+details.section-expander .section-body { padding: 2px 6px 14px 24px; }
+
+details.section-expander details.section-expander { border-top: none; }
+
+details.section-expander details.section-expander summary
+{
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 6px;
+}
+
+/* The whole rail sticks as a unit and scrolls internally if taller than the
+   viewport — sticking .infobox alone let the cross-refs panel slide under it. */
+.rail
+{
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
 
 .infobox
 {
@@ -85,13 +161,10 @@ button:hover { border-color: var(--accent); }
     border: 1px solid #2a2f38;
     border-radius: 10px;
     padding: 14px 16px;
-    min-width: 260px;
-    align-self: flex-start;
-    position: sticky;
-    top: 20px;
 }
 
-.infobox-name { font-weight: 700; font-size: 17px; margin-bottom: 6px; }
+.infobox-name { font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+
 .infobox-group
 {
     font-size: 11px;
@@ -102,17 +175,27 @@ button:hover { border-color: var(--accent); }
 }
 
 .infobox-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
 .infobox-table th
 {
+    width: 1%;
     text-align: right;
     color: var(--dim);
     font-weight: 500;
-    padding: 3px 8px 3px 0;
+    padding: 3px 10px 3px 0;
     vertical-align: top;
     white-space: nowrap;
 }
 
-.infobox-table td { text-align: left; word-break: break-word; padding: 2px 0; }
+.infobox-table td
+{
+    text-align: left;
+    word-break: break-word;
+    padding: 2px 0;
+    font-family: var(--mono);
+    font-size: 12.5px;
+}
+
 .infobox-source { font-size: 12px; color: var(--dim); }
 .infobox-source a { color: var(--accent); text-decoration: none; }
 
@@ -120,7 +203,6 @@ button:hover { border-color: var(--accent); }
 {
     display: block;
     width: 100%;
-    max-width: 250px;
     height: auto;
     margin: 0 auto 10px;
     border-radius: 6px;
@@ -136,25 +218,136 @@ button:hover { border-color: var(--accent); }
     margin-top: 22px;
 }
 
+.rail .panel { margin-top: 0; }
+
 .panel-heading { font-size: 20px; margin: 0 0 4px; font-weight: 650; }
+.rail-heading { font-size: 15px; }
 .panel-source { font-size: 12px; color: var(--dim); margin: 0 0 12px; }
 .panel-note { font-size: 12px; color: var(--dim); margin: 8px 0 0; }
 
+.source-tag
+{
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.source-pw { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.source-pubmed { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+.source-wp { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+
 .dosage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
 .dosage-table th
 {
     text-align: left;
     color: var(--dim);
     font-weight: 500;
-    padding: 4px 10px 4px 0;
+    padding: 4px 10px 4px 6px;
     border-bottom: 1px solid var(--line);
 }
-.dosage-table td { padding: 4px 10px 4px 0; }
 
-.reference-list, .cross-ref-list { margin: 0; padding-left: 18px; }
-.reference-item, .cross-ref-item { margin: 4px 0; font-size: 14px; }
-.cross-ref-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding-left: 0; }
-.cross-ref-item a
+.dosage-table th:nth-child(2) { border-bottom: 2px solid rgba(34, 197, 94, 0.5); }
+.dosage-table th:nth-child(3) { border-bottom: 2px solid rgba(132, 204, 22, 0.5); }
+.dosage-table th:nth-child(4) { border-bottom: 2px solid rgba(234, 179, 8, 0.5); }
+.dosage-table th:nth-child(5) { border-bottom: 2px solid rgba(249, 115, 22, 0.5); }
+.dosage-table th:nth-child(6) { border-bottom: 2px solid rgba(239, 68, 68, 0.55); }
+
+.dosage-table td { padding: 5px 10px 5px 6px; }
+.dosage-table td:nth-child(2) { background: var(--dose-threshold); }
+.dosage-table td:nth-child(3) { background: var(--dose-light); }
+.dosage-table td:nth-child(4) { background: var(--dose-common); }
+.dosage-table td:nth-child(5) { background: var(--dose-strong); }
+.dosage-table td:nth-child(6) { background: var(--dose-heavy); }
+.dosage-table .route-cell { font-weight: 600; }
+
+.gantt { margin-top: 8px; }
+
+.gantt-row
+{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.gantt-label { width: 84px; flex-shrink: 0; font-size: 13px; font-weight: 600; }
+
+.gantt-track
+{
+    position: relative;
+    flex: 1;
+    height: 24px;
+    background: var(--panel-2);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.gantt-seg
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    min-width: 2px;
+    overflow: hidden;
+}
+
+.gantt-seg-label
+{
+    display: block;
+    font-size: 10.5px;
+    line-height: 24px;
+    padding: 0 6px;
+    white-space: nowrap;
+    color: rgba(230, 232, 236, 0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.phase-onset { background: rgba(122, 162, 247, 0.28); }
+.phase-comeup { background: rgba(122, 162, 247, 0.48); }
+.phase-peak { background: rgba(122, 162, 247, 0.95); }
+.phase-offset { background: rgba(122, 162, 247, 0.48); }
+.phase-aftereffects { background: rgba(122, 162, 247, 0.18); }
+
+.gantt-total { width: 90px; flex-shrink: 0; font-size: 12px; color: var(--dim); }
+
+.gantt-legend
+{
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: capitalize;
+}
+
+.gantt-key { display: inline-flex; align-items: center; gap: 5px; }
+
+.gantt-swatch
+{
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.reference-list { margin: 0; padding-left: 18px; }
+.reference-item { margin: 4px 0; font-size: 14px; }
+.reference-snippet { font-size: 12.5px; color: var(--dim); margin-top: 1px; }
+
+.cross-refs-panel { background: var(--panel); }
+
+.cross-ref-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.cross-ref-item { position: relative; margin: 0; font-size: 13px; }
+
+.cross-ref-item > a
 {
     display: inline-block;
     background: var(--panel-2);
@@ -163,4 +356,26 @@ button:hover { border-color: var(--accent); }
     padding: 4px 10px;
     font-size: 13px;
 }
-.cross-ref-item a:hover { border-color: var(--accent); text-decoration: none; }
+
+.cross-ref-item > a:hover { border-color: var(--accent); text-decoration: none; }
+
+.xref-card
+{
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    width: 160px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.cross-ref-item:hover .xref-card { display: block; }
+
+.xref-card img { width: 100%; border-radius: 5px; background: #fff; }
+.xref-card-name { font-size: 13px; font-weight: 600; margin-top: 6px; }
+.xref-card-formula { font-family: var(--mono); font-size: 12px; color: var(--dim); }
