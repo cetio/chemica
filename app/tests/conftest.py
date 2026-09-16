@@ -89,6 +89,9 @@ def _fixture_for_url(url: str) -> Path | None:
                 return FIXTURE_DIR / "pubchem" / f"pugview_pharma_{cid}.json"
             return FIXTURE_DIR / "pubchem" / f"pugview_{cid}.json"
         if "/cids/JSON" in url:
+            if "fastsimilarity" in url:
+                cid = _extract_path_segment(url, "/fastsimilarity_2d/cid/", "/cids")
+                return FIXTURE_DIR / "pubchem" / f"similar_{cid}.json"
             name = _extract_path_segment(url, "/compound/name/", "/cids")
             return FIXTURE_DIR / "pubchem" / f"cids_{name}.json"
         if "/property/" in url:

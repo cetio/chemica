@@ -284,6 +284,29 @@ class PubChemSource:
             return None
         return profile
 
+    def fetch_by_cids(self, cids: list[int]) -> dict[int, Compound]:
+        """Light compounds for known CIDs — one batched properties call,
+        synonyms skipped (xref cards only show formula/thumb)."""
+        props_by_cid = self._properties_batch(cids)
+        return {
+            cid: self._shape(props["Title"], cid, props, synonyms=[])
+            for cid, props in props_by_cid.items()
+            if props.get("Title")
+        }
+
+    def fetch_similar(self, cid: int, limit: int = 8) -> list[int]:
+        """2D-structural neighbors — the related-compounds backstop for
+        compounds whose Wikipedia article has few outlinks (thin RC pages).
+        PubChem returns the query CID first; caller filters it."""
+        url = (
+            f"{PUG}/compound/fastsimilarity_2d/cid/{cid}/cids/JSON"
+            f"?MaxRecords={limit}"
+        )
+        resp = cache.get(url, timeout=15)
+        if resp.status_code != 200:
+            return []
+        return resp.json().get("IdentifierList", {}).get("CID", [])
+
     def fetch_hazards(self, cid: int) -> HazardProfile | None:
         """GHS classification via PUG-View: pictograms, signal word, and
         H-statements, deduplicated across the notifier entries."""
