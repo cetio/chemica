@@ -65,6 +65,16 @@ class CrossReference:
     compound: Compound
 
 
+@dataclass(frozen=True)
+class Reference:
+    """One literature citation (PubMed paper): title + link + abstract snippet."""
+
+    title: str
+    url: str | None = None
+    source: str | None = None
+    snippet: str | None = None
+
+
 
 @dataclass(frozen=True)
 class DoseLadder:
@@ -111,6 +121,7 @@ class CompoundPage:
     articles: list[Article]
     dose_ladders: list[DoseLadder]
     effects: list[EffectsProfile]
+    references: list[Reference] = field(default_factory=list)
     cross_references: list[CrossReference] = field(default_factory=list)
 
 
@@ -152,10 +163,13 @@ def fetch_compound_page(name: str) -> CompoundPage:
     from chemica.sources.pubchem import PubChemSource
     from chemica.sources.wikipedia import API as WIKI_API
 
+    from chemica.sources.pubmed import PubMedSource
+
     pw = PsychonautWikiSource()
     ladders, effects = pw.fetch_profile(name)
     articles = list(_article_sources(name))
     compound = PubChemSource().fetch_compound(name)
+    references = PubMedSource().fetch_references(name)
 
     def resolver(query: str) -> Compound | None:
         if query.lower() == name.lower():
@@ -199,6 +213,7 @@ def fetch_compound_page(name: str) -> CompoundPage:
         articles=articles,
         dose_ladders=ladders,
         effects=effects,
+        references=references,
         cross_references=cross_references,
     )
 

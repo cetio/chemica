@@ -21,7 +21,7 @@ from chemica import (
     fetch_compound,
     fetch_compound_page,
 )
-from chemica.core import DoseLadder, EffectsProfile, Section, Source
+from chemica.core import DoseLadder, EffectsProfile, Reference, Section, Source
 from chemica.sources.psychonaut import PsychonautWikiSource
 from chemica.sources.pubchem import PubChemSource
 from chemica.sources.pubmed import PubMedSource
@@ -175,6 +175,19 @@ def test_pubmed_article_aspirin(recording):
         assert paper.text  # abstract
 
 
+def test_pubmed_references_aspirin(recording):
+    # The references panel needs per-paper links, not one article-level URL.
+    references = PubMedSource().fetch_references("aspirin")
+
+    assert len(references) == 5
+    for ref in references:
+        assert isinstance(ref, Reference)
+        assert ref.source == "pubmed"
+        assert ref.title
+        assert ref.url and ref.url.startswith("https://pubmed.ncbi.nlm.nih.gov/")
+        assert ref.url.rstrip("/").rsplit("/", 1)[-1].isdigit()  # PMID link
+
+
 def test_fetch_article_stays_first_hit(recording):
     # The web shell's contract: one article, first source that answers.
     article = fetch_article("aspirin")
@@ -201,6 +214,9 @@ def test_fetch_compound_page_caffeine(recording):
     routes = {l.route for l in page.dose_ladders}
     assert "Oral" in routes
     assert {e.route for e in page.effects} >= {"Oral"}
+
+    assert len(page.references) == 5
+    assert all(r.source == "pubmed" for r in page.references)
     assert page.cross_references is not None
 
 

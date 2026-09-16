@@ -91,8 +91,6 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
         or by_source.get("psychonautwiki")
         or (page.articles[0] if page.articles else None)
     )
-    references = [a for a in page.articles if a.source == "pubmed"]
-
     return templates.TemplateResponse(
         request,
         "article.html",
@@ -102,7 +100,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "infobox": _infobox_groups(compound) if compound else [],
             "dosages": page.dose_ladders,
             "effects": page.effects,
-            "references": references,
+            "references": page.references,
             "cross_references": page.cross_references,
         },
     )
