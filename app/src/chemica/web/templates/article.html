@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="article">
+  <nav class="article-nav">
+    <a class="nav-link" href="/">&#8592; search</a>
+    <h1 class="article-title">{{ compound.name if compound else article.title }}</h1>
+  </nav>
+
+  <div class="article-columns">
+    <div class="article-main">
+      {% if article %}
+        {% for section in article.sections %}
+          <h2 class="section-heading">{{ section.heading }}</h2>
+          {% for paragraph in section.text.split("\n\n") %}
+            {% if paragraph.strip() %}<p>{{ paragraph }}</p>{% endif %}
+          {% endfor %}
+        {% endfor %}
+      {% else %}
+        <p class="dim">No article found for this compound.</p>
+      {% endif %}
+    </div>
+
+    {% if compound %}
+    <aside class="infobox">
+      <div class="infobox-name">{{ compound.name }}</div>
+      {% for group_name, rows in infobox %}
+        <h3 class="infobox-group">{{ group_name }}</h3>
+        <table class="infobox-table">
+          {% for label, value in rows %}
+          <tr><th>{{ label }}</th><td>{{ value }}</td></tr>
+          {% endfor %}
+        </table>
+      {% endfor %}
+      {% if article and article.url %}
+        <p class="infobox-source">Source: <a href="{{ article.url }}">{{ article.title }}</a></p>
+      {% endif %}
+    </aside>
+    {% endif %}
+  </div>
+{% endblock %}
