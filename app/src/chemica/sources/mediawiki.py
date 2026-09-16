@@ -32,8 +32,25 @@ _EXCLUDED_HEADINGS = {
 }
 
 
+# (api, query) → resolved title. fetch_profile + fetch_article resolve the same
+# title through different source instances; memoizing here dedups the call.
+# The extract/link caches below do the same for the heavier calls — page
+# contents are stable within a session and the caches die with the process.
+_TITLES: dict[tuple[str, str], str | None] = {}
+_EXTRACTS: dict[tuple[str, str], list[Section]] = {}
+_LINKS: dict[tuple[str, str, int], list[str]] = {}
+_SECTION_LINKS: dict[tuple[str, str, str], list[str]] = {}
+
+
 def resolve_title(api: str, query: str) -> str | None:
     """Resolve a search term to a canonical page title, or None if missing."""
+    key = (api, query.lower())
+    if key not in _TITLES:
+        _TITLES[key] = _resolve_title(api, query)
+    return _TITLES[key]
+
+
+def _resolve_title(api: str, query: str) -> str | None:
     url = f"{api}?action=query&titles={requests.utils.quote(query)}&format=json&redirects=1"
     resp = requests.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
@@ -49,6 +66,13 @@ def resolve_title(api: str, query: str) -> str | None:
 
 def extract_sections(api: str, title: str) -> list[Section]:
     """Fetch the full plain-text extract and split it into titled sections."""
+    key = (api, title)
+    if key not in _EXTRACTS:
+        _EXTRACTS[key] = _extract_sections(api, title)
+    return _EXTRACTS[key]
+
+
+def _extract_sections(api: str, title: str) -> list[Section]:
     url = (
         f"{api}?action=query&prop=extracts&titles={requests.utils.quote(title)}"
         f"&format=json&explaintext=1&exsectionformat=wiki"
@@ -70,6 +94,13 @@ def extract_sections(api: str, title: str) -> list[Section]:
 
 def page_links(api: str, title: str, limit: int = 50) -> list[str]:
     """Return the main-namespace page titles this article links to."""
+    key = (api, title, limit)
+    if key not in _LINKS:
+        _LINKS[key] = _page_links(api, title, limit)
+    return _LINKS[key]
+
+
+def _page_links(api: str, title: str, limit: int) -> list[str]:
     url = (
         f"{api}?action=query&prop=links&titles={requests.utils.quote(title)}"
         f"&plnamespace=0&pllimit={limit}&format=json&formatversion=2"
@@ -94,6 +125,13 @@ def section_links(api: str, title: str, heading: str) -> list[str]:
     prop=links scoped to it. Lets the resolver use curated 'See also' links
     even though the section is filtered out of the displayed article.
     """
+    key = (api, title, heading.lower())
+    if key not in _SECTION_LINKS:
+        _SECTION_LINKS[key] = _section_links(api, title, heading)
+    return _SECTION_LINKS[key]
+
+
+def _section_links(api: str, title: str, heading: str) -> list[str]:
     url = (
         f"{api}?action=parse&page={requests.utils.quote(title)}"
         f"&prop=sections&format=json&formatversion=2"

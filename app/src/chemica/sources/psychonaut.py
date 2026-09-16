@@ -41,6 +41,9 @@ _REF_RE = re.compile(r"<ref[^>]*>.*?</ref>|<ref[^>]*/>", re.DOTALL)
 _TEMPLATE_RE = re.compile(r"\{\{[^}]*\}\}")
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
+# SubstanceBox wikitext by page title — stable per session, process-lifetime.
+_BOX_CACHE: dict[str, str | None] = {}
+
 _DOSE_FIELDS = {"Threshold", "Light", "Common", "Strong", "Heavy", "Bioavailability"}
 _TIME_FIELDS = {"Duration", "Onset", "Comeup", "Peak", "Offset", "Aftereffects"}
 
@@ -77,6 +80,11 @@ class PsychonautWikiSource:
         return None
 
     def _substancebox(self, title: str) -> str | None:
+        if title not in _BOX_CACHE:
+            _BOX_CACHE[title] = self._fetch_substancebox(title)
+        return _BOX_CACHE[title]
+
+    def _fetch_substancebox(self, title: str) -> str | None:
         url = (
             f"{API}?action=parse&prop=wikitext&format=json&formatversion=2"
             f"&page={requests.utils.quote('Template:SubstanceBox/' + title)}"
