@@ -243,6 +243,20 @@ def test_fetch_interactions_ketamine(recording):
     assert by_substance["Amphetamines"].severity == "uncertain"
 
 
+def test_fetch_drug_profile_ketamine(recording):
+    # Recorded PUG-View 'Drug and Medication Information': regulatory fields
+    # for a real drug record — ketamine is Approved + Prescription Only.
+    from chemica.core import fetch_drug_profile
+
+    profile = fetch_drug_profile("ketamine")
+    assert profile is not None
+    assert profile.max_phase == "Approved"
+    assert profile.availability == "Prescription Only"
+    assert "Parenteral" in profile.routes
+    assert any("Dissociative" in c for c in profile.drug_classes)
+    assert profile.half_life
+
+
 def test_fetch_hazards_caffeine(recording):
     # PUG-View GHS Classification: pictograms dedupe across notifiers,
     # strictest signal wins, statements keep their notifier %.

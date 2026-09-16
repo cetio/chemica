@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import replace
 from typing import Any
 
 import requests
 
 from chemica import cache
-from chemica.core import Article, Compound, HazardProfile
+from chemica.core import Article, Compound, DrugProfile, HazardProfile
 
 # CAS Registry Numbers look like 58-08-2: 2-7 digits, dash, 2 digits, dash, 1 digit.
 _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
@@ -180,6 +181,71 @@ class PubChemSource:
         info = resp.json().get("InformationList", {}).get("Information", [])
         return info[0].get("Synonym", []) if info else []
 
+    def fetch_drug_profile(self, cid: int) -> DrugProfile | None:
+        """Regulatory/clinical identity via PUG-View's drug section — one
+        call, heading-scoped. Sparse/absent on research-chem records, which
+        decline honestly (None)."""
+        url = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/"
+            f"compound/{cid}/JSON?heading=Drug+and+Medication+Information"
+        )
+        resp = cache.get(url, timeout=20)
+        if resp.status_code != 200:
+            return None
+        root = resp.json().get("Record", {}).get("Section", [])
+        # Half-life lives under a different top-level heading — one extra
+        # scoped call rather than pulling the whole record unscoped.
+        pharma_url = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/"
+            f"compound/{cid}/JSON?heading=Pharmacology+and+Biochemistry"
+        )
+        pharma_resp = cache.get(pharma_url, timeout=20)
+        pharma_root = (
+            pharma_resp.json().get("Record", {}).get("Section", [])
+            if pharma_resp.status_code == 200
+            else []
+        )
+        profile = DrugProfile()
+        for heading in (
+            "Max Phase",
+            "First Approval",
+            "Availability Type",
+            "Route of Administration",
+            "Drug Classes",
+            "Biological Half-Life",
+            "Black Box Warning",
+        ):
+            scope = pharma_root if heading == "Biological Half-Life" else root
+            section = _find_section(scope, heading)
+            if section is None:
+                continue
+            values = _info_values(section)
+            if not values:
+                continue
+            if heading == "Max Phase":
+                profile = replace(profile, max_phase=values[0])
+            elif heading == "First Approval":
+                profile = replace(profile, first_approval=_int(values[0]))
+            elif heading == "Availability Type":
+                profile = replace(profile, availability=values[0])
+            elif heading == "Route of Administration":
+                profile = replace(profile, routes=values)
+            elif heading == "Drug Classes":
+                classes = values[0].split(";")
+                profile = replace(
+                    profile,
+                    drug_classes=[c.strip() for c in classes if c.strip()],
+                )
+            elif heading == "Biological Half-Life":
+                profile = replace(profile, half_life=values)
+            elif heading == "Black Box Warning":
+                profile = replace(
+                    profile, black_box=values[0].strip().lower() == "yes"
+                )
+        if profile == DrugProfile():
+            return None
+        return profile
+
     def fetch_hazards(self, cid: int) -> HazardProfile | None:
         """GHS classification via PUG-View: pictograms, signal word, and
         H-statements, deduplicated across the notifier entries."""
@@ -219,6 +285,21 @@ class PubChemSource:
         if not (pictograms or signal or statements):
             return None
         return HazardProfile(pictograms=pictograms, signal=signal, statements=statements)
+
+
+def _info_values(section: dict) -> list[str]:
+    """Flatten a PUG-View section's Information values to plain strings —
+    StringWithMarkup strings first, then raw Numbers (First Approval year)."""
+    ret: list[str] = []
+    for info in section.get("Information", []):
+        value = info.get("Value", {})
+        for item in value.get("StringWithMarkup", []):
+            s = item.get("String", "").strip()
+            if s:
+                ret.append(s)
+        for number in value.get("Number", []):
+            ret.append(str(number))
+    return ret
 
 
 def _find_section(sections: list[dict], heading: str) -> dict | None:

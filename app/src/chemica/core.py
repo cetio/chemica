@@ -89,6 +89,25 @@ class HazardProfile:
 
 
 @dataclass(frozen=True)
+class DrugProfile:
+    """Regulatory/clinical identity from PubChem's PUG-View drug section.
+
+    `availability` is US-jurisdiction (FDA-flavored PubChem records) — render
+    it as 'US: Prescription Only', not universal law. `half_life` keeps the
+    source's strings verbatim since records carry multiple population values.
+    """
+
+    max_phase: str | None = None  # e.g. "Approved"
+    availability: str | None = None  # e.g. "Prescription Only" (US)
+    first_approval: int | None = None  # e.g. 1974
+    black_box: bool = False
+    routes: list[str] = field(default_factory=list)  # e.g. ["Parenteral"]
+    drug_classes: list[str] = field(default_factory=list)  # MeSH pharma classes
+    half_life: list[str] = field(default_factory=list)
+    source: str | None = "pubchem"
+
+
+@dataclass(frozen=True)
 class Interaction:
     """A substance interaction line from PsychonautWiki's annotated markup.
 
@@ -250,6 +269,17 @@ def fetch_interactions(name: str) -> list[Interaction]:
     from chemica.sources.psychonaut import PsychonautWikiSource
 
     return _try(PsychonautWikiSource().fetch_interactions, name) or []
+
+
+def fetch_drug_profile(name: str) -> DrugProfile | None:
+    """Regulatory/clinical identity for the deferred drug-profile panel."""
+    from chemica.sources.pubchem import PubChemSource
+
+    source = PubChemSource()
+    compound = _try(source.fetch_compound, name)
+    if compound is None or compound.cid is None:
+        return None
+    return _try(source.fetch_drug_profile, compound.cid)
 
 
 def fetch_hazards(name: str) -> HazardProfile | None:

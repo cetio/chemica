@@ -82,6 +82,11 @@ def _fixture_for_url(url: str) -> Path | None:
     if "pubchem.ncbi.nlm.nih.gov" in url:
         if "pug_view" in url:
             cid = _extract_path_segment(url, "/compound/", "/JSON")
+            heading = _extract_query_param(url, "heading")
+            if "Drug" in heading:
+                return FIXTURE_DIR / "pubchem" / f"pugview_drug_{cid}.json"
+            if "Pharmacology" in heading:
+                return FIXTURE_DIR / "pubchem" / f"pugview_pharma_{cid}.json"
             return FIXTURE_DIR / "pubchem" / f"pugview_{cid}.json"
         if "/cids/JSON" in url:
             name = _extract_path_segment(url, "/compound/name/", "/cids")
