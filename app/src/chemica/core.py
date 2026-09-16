@@ -179,11 +179,12 @@ def fetch_compound_page(name: str) -> CompoundPage:
         # A link is a real mention only if it appears in the article text,
         # filtering out navbox/template-only links (e.g. the Stimulants box).
         text_lower = article_text.lower()
-        link_candidates = {
-            title.split("(")[0].strip()
-            for title in raw_titles
-            if title.split("(")[0].strip().lower() in text_lower
-        }
+        for title in raw_titles:
+            clean = title.split("(")[0].strip()
+            if clean.lower() in text_lower:
+                link_candidates.add(clean)
+            if len(link_candidates) >= 15:
+                break
     link_refs = resolve_candidates(link_candidates, resolver)
 
     # Merge, preferring link-based references and keeping names stable.
