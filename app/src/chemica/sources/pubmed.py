@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 
 import requests
 
+from chemica import cache
 from chemica.core import Article, Compound, Reference, Section
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -68,11 +69,20 @@ class PubMedSource:
         return _parse_articles(self._efetch(pmids))
 
     def _search(self, query: str) -> list[str]:
+        # Exact phrase in title/abstract first: PubMed's term mapping expands
+        # acronyms like 'MMC' into unrelated fields (battery/steel papers on
+        # the 2-MMC sweep). If the phrase finds nothing, the query is too
+        # exotic for exact matching (α-PVP is indexed as alpha-PVP) and the
+        # plain term gets a chance instead.
+        pmids = self._esearch(f'"{query}"[Title/Abstract]')
+        return pmids or self._esearch(query)
+
+    def _esearch(self, term: str) -> list[str]:
         url = (
-            f"{EUTILS}/esearch.fcgi?db=pubmed&term={requests.utils.quote(query)}"
+            f"{EUTILS}/esearch.fcgi?db=pubmed&term={requests.utils.quote(term)}"
             f"&retmax={MAX_RESULTS}&retmode=json&{ID_PARAMS}"
         )
-        resp = requests.get(url, timeout=15, headers=HEADERS)
+        resp = cache.get(url, timeout=15, headers=HEADERS)
         if resp.status_code != 200:
             return []
         return resp.json().get("esearchresult", {}).get("idlist", [])
@@ -82,7 +92,7 @@ class PubMedSource:
             f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}"
             f"&rettype=abstract&retmode=xml&{ID_PARAMS}"
         )
-        resp = requests.get(url, timeout=15, headers=HEADERS)
+        resp = cache.get(url, timeout=15, headers=HEADERS)
         if resp.status_code != 200:
             return ""
         return resp.text

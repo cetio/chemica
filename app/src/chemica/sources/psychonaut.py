@@ -20,6 +20,7 @@ import re
 
 import requests
 
+from chemica import cache
 from chemica.core import Article, Compound, DoseLadder, EffectsProfile
 from chemica.sources import mediawiki
 
@@ -40,6 +41,10 @@ _LINK_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 _REF_RE = re.compile(r"<ref[^>]*>.*?</ref>|<ref[^>]*/>", re.DOTALL)
 _TEMPLATE_RE = re.compile(r"\{\{[^}]*\}\}")
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# Inline HTML (<span style=...> wrappers in duration fields) and bold/italic
+# apostrophe runs (''...''', '''...''') — both leaked into Gantt labels raw.
+_TAG_RE = re.compile(r"</?[a-zA-Z][^>]*>")
+_APOSTROPHE_RE = re.compile(r"'{2,}")
 
 # SubstanceBox wikitext by page title — stable per session, process-lifetime.
 _BOX_CACHE: dict[str, str | None] = {}
@@ -89,7 +94,7 @@ class PsychonautWikiSource:
             f"{API}?action=parse&prop=wikitext&format=json&formatversion=2"
             f"&page={requests.utils.quote('Template:SubstanceBox/' + title)}"
         )
-        resp = requests.get(url, timeout=15, headers=mediawiki.HEADERS)
+        resp = cache.get(url, timeout=15, headers=mediawiki.HEADERS)
         if resp.status_code != 200:
             return None
         wikitext = resp.json().get("parse", {}).get("wikitext")
@@ -153,6 +158,8 @@ def _clean_value(raw: str) -> str:
     value = _SEM_RE.sub(lambda m: m.group(1).strip(), raw)
     value = _LINK_RE.sub(lambda m: (m.group(2) or m.group(1)).strip(), value)
     value = _REF_RE.sub("", value)
-    value = _TEMPLATE_RE.sub("", value)
     value = _COMMENT_RE.sub("", value)
+    value = _TAG_RE.sub("", value)
+    value = _APOSTROPHE_RE.sub("", value)
+    value = _TEMPLATE_RE.sub("", value)
     return value.strip()

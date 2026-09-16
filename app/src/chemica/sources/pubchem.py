@@ -16,6 +16,7 @@ from typing import Any
 
 import requests
 
+from chemica import cache
 from chemica.core import Article, Compound
 
 # CAS Registry Numbers look like 58-08-2: 2-7 digits, dash, 2 digits, dash, 1 digit.
@@ -98,7 +99,7 @@ class PubChemSource:
         if key in _CID_CACHE:
             return _CID_CACHE[key]
         url = f"{PUG}/compound/name/{requests.utils.quote(name)}/cids/JSON"
-        resp = requests.get(url, timeout=15)
+        resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             _CID_CACHE[key] = None
             return None
@@ -111,7 +112,7 @@ class PubChemSource:
         """One call for many CIDs — PubChem accepts a comma-separated list."""
         props = "MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
         url = f"{PUG}/compound/cid/{','.join(str(c) for c in cids)}/property/{props}/JSON"
-        resp = requests.get(url, timeout=15)
+        resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             return {}
         table = resp.json().get("PropertyTable", {}).get("Properties", [])
@@ -130,8 +131,11 @@ class PubChemSource:
         if synonyms is None:
             synonyms = self._synonyms(cid)
         return Compound(
-            # First letter only — .title() would mangle "DMT"/"5-HTP".
-            name=query[:1].upper() + query[1:],
+            # First letter only — .title() would mangle "DMT"/"5-HTP", and
+            # .upper() on non-ASCII turns α-PVP into Α-PVP (Greek capital).
+            name=query[:1].upper() + query[1:]
+            if query[:1].isascii() and query[:1].islower()
+            else query,
             cid=cid,
             formula=props.get("MolecularFormula"),
             molecular_weight=_float(props.get("MolecularWeight")),
@@ -149,7 +153,7 @@ class PubChemSource:
 
     def _synonyms(self, cid: int) -> list[str]:
         url = f"{PUG}/compound/cid/{cid}/synonyms/JSON"
-        resp = requests.get(url, timeout=15)
+        resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
             return []
         info = resp.json().get("InformationList", {}).get("Information", [])

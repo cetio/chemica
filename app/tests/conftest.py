@@ -44,6 +44,10 @@ def recording(monkeypatch):
     """Replay recorded fixtures instead of hitting the network."""
     import requests
 
+    # Sources route through chemica.cache.get; bypass the disk cache so
+    # fixtures stay authoritative over anything a live run cached.
+    monkeypatch.setenv("CHEMICA_NO_CACHE", "1")
+
     def fake_get(url: str, *args: Any, **kwargs: Any) -> FixtureResponse:
         if "/property/" in url and "pubchem" in url:
             cid = _extract_path_segment(url, "/compound/cid/", "/property")
