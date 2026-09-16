@@ -23,6 +23,7 @@ from chemica.core import (
     Compound,
     fetch_compound_page,
     fetch_cross_references,
+    fetch_drug_profile,
     fetch_hazards,
     fetch_interactions,
     fetch_references,
@@ -206,6 +207,12 @@ def _clean_statements(statements: list[str]) -> list[dict[str, Any]]:
 def interactions_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred PW dangerous-interactions card — data or decline."""
     return templates.TemplateResponse(request, "_interactions.html", {"interactions": fetch_interactions(name)})
+
+
+@app.get("/compound/{name}/drug-profile", response_class=HTMLResponse)
+def drug_profile_fragment(request: Request, name: str) -> HTMLResponse:
+    """Deferred PubChem drug-profile card — data or decline."""
+    return templates.TemplateResponse(request, "_drug_profile.html", {"profile": fetch_drug_profile(name)})
 
 
 @app.get("/compound/{name}/hazards", response_class=HTMLResponse)

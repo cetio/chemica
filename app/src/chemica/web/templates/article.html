@@ -26,6 +26,7 @@
     <nav class="toc-rail">
       <div class="toc-title">Contents</div>
       <ol class="toc-list">
+        <li><a href="#panel-drug-profile">Drug profile</a></li>
         <li><a href="#panel-hazards">Hazards</a></li>
         <li><a href="#panel-interactions">Dangerous interactions</a></li>
         {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
@@ -42,6 +43,10 @@
           {% if paragraph.strip() %}<p class="lead">{{ paragraph }}</p>{% endif %}
         {% endfor %}
       {% endif %}
+
+      <div class="fragment-slot" id="panel-drug-profile" data-fragment="/compound/{{ name | urlencode }}/drug-profile">
+        <div class="fragment-loading">Loading drug profile&#8230;</div>
+      </div>
 
       <div class="fragment-slot" id="panel-hazards" data-fragment="/compound/{{ name | urlencode }}/hazards">
         <div class="fragment-loading">Loading hazards&#8230;</div>

@@ -480,6 +480,62 @@ details.section-expander details.section-expander summary
 .hazards-list code { font-family: var(--mono); font-size: 12px; color: var(--text); }
 .hazards-pct { font-family: var(--mono); font-size: 11px; color: var(--accent); }
 
+.profile-table
+{
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 4px 0 8px;
+}
+
+.profile-table th
+{
+    text-align: left;
+    font-weight: 500;
+    color: var(--dim);
+    font-size: 12px;
+    padding: 4px 16px 4px 0;
+    width: 110px;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.profile-table td { padding: 4px 0; color: var(--text); }
+
+.profile-scope
+{
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    vertical-align: 1px;
+}
+
+.profile-warning
+{
+    margin: 8px 0;
+    padding: 7px 12px;
+    border-left: 3px solid #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    color: #ff9d9d;
+}
+
+.profile-halflife
+{
+    margin: 6px 0 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    color: var(--dim);
+}
+
+.profile-halflife li { margin-bottom: 3px; }
+.profile-halflife li::marker { color: var(--line); }
+
 .route-bioavail
 {
     display: block;
