@@ -11,6 +11,7 @@ resolution filter: candidates that don't resolve to a compound are discarded.
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable
 
 from chemica.core import Compound, CrossReference
@@ -49,19 +50,28 @@ def find_cross_references(
 
 
 def resolve_candidates(
-    candidates: set[str], resolver: Callable[[str], Compound | None]
+    candidates: set[str], resolver: Callable[[str], Compound | None], max_workers: int = 5
 ) -> list[CrossReference]:
-    """Resolve a set of candidate names and return the ones that map to compounds."""
+    """Resolve a set of candidate names in parallel and return the compounds."""
     ret: list[CrossReference] = []
     seen: set[int] = set()
-    for name in candidates:
-        compound = resolver(name)
-        if compound is None:
-            continue
-        if id(compound) in seen:
-            continue
-        seen.add(id(compound))
-        ret.append(CrossReference(name, compound))
+
+    def safe_resolve(name: str) -> tuple[str, Compound | None]:
+        try:
+            return name, resolver(name)
+        except Exception:
+            return name, None
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = [pool.submit(safe_resolve, name) for name in candidates]
+        for future in as_completed(futures):
+            name, compound = future.result()
+            if compound is None:
+                continue
+            if id(compound) in seen:
+                continue
+            seen.add(id(compound))
+            ret.append(CrossReference(name, compound))
     return ret
 
 
