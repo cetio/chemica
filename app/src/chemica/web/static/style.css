@@ -451,7 +451,7 @@ details.section-expander details.section-expander summary
     width: 46px;
     height: 46px;
     background: #fff;
-    border-radius: 4px;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
 .ghs-signal
