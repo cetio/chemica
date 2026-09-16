@@ -87,6 +87,16 @@ class PubChemSource:
     def _uncached(self, query: str) -> Compound | None:
         cid = self._name_to_cid(query)
         if cid is None:
+            # PubChem's synonym list misses slang/abbreviations PubChem users
+            # do search by ('MXiPr' → Methoxisopropamine). Wikipedia's title
+            # resolver knows the canonical name — retry once through it.
+            from chemica.sources import mediawiki
+            from chemica.sources.wikipedia import API as WIKI_API
+
+            canonical = mediawiki.resolve_title(WIKI_API, query)
+            if canonical and canonical.lower() != query.strip().lower():
+                cid = self._name_to_cid(canonical)
+        if cid is None:
             return None
         props = self._properties(cid)
         base_cid = self._freebase_cid(props)
