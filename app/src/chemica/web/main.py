@@ -162,6 +162,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "section_tree": _section_tree(article.sections[1:]) if article else [],
             "dosages": [replace(d, bioavailability=_clean_field(d.bioavailability)) for d in page.dose_ladders],
             "timelines": [{"route": e.route, "total": e.total, "segments": _segments(e)} for e in page.effects],
+            "subjective": page.subjective,
         },
     )
 

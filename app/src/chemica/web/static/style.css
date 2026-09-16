@@ -553,6 +553,26 @@ details.section-expander details.section-expander summary
 }
 .profile-halflife li::marker { color: var(--line); }
 
+.effect-tags
+{
+    font-size: 13px;
+    color: var(--dim);
+    line-height: 1.75;
+    margin-top: 6px;
+}
+
+.effect-more { display: inline; }
+.effect-more summary
+{
+    display: inline;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 12.5px;
+    list-style: none;
+}
+.effect-more summary::-webkit-details-marker { display: none; }
+.effect-more[open] summary { display: block; margin: 4px 0; }
+
 .route-bioavail
 {
     display: block;

@@ -37,6 +37,7 @@
         <li><a href="#panel-interactions">Dangerous interactions</a></li>
         {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
         {% if timelines %}<li><a href="#panel-effects">Effects timeline</a></li>{% endif %}
+        {% if subjective %}<li><a href="#panel-subjective">Subjective effects</a></li>{% endif %}
         {% for section, children in section_tree %}
           <li><a href="#sec-{{ loop.index }}">{{ section.heading }}</a></li>
         {% endfor %}
@@ -117,6 +118,36 @@
             {% endfor %}
           </div>
         </div>
+      </section>
+      {% endif %}
+
+      {% if subjective %}
+      <section class="panel subjective-panel" id="panel-subjective">
+        <h2 class="panel-heading">Subjective effects <span class="source-tag source-pw">PsychonautWiki</span></h2>
+        {% if subjective.addiction_potential or subjective.tolerance_half or subjective.tolerance_full or subjective.tolerance_zero %}
+        <table class="profile-table">
+          {% if subjective.addiction_potential %}
+          <tr><th>Addiction</th><td>{{ subjective.addiction_potential }}</td></tr>
+          {% endif %}
+          {% if subjective.tolerance_half %}
+          <tr><th>Half tolerance</th><td>{{ subjective.tolerance_half }}</td></tr>
+          {% endif %}
+          {% if subjective.tolerance_full %}
+          <tr><th>Full tolerance</th><td>{{ subjective.tolerance_full }}</td></tr>
+          {% endif %}
+          {% if subjective.tolerance_zero %}
+          <tr><th>Zero tolerance</th><td>{{ subjective.tolerance_zero }}</td></tr>
+          {% endif %}
+        </table>
+        {% endif %}
+        {% if subjective.effect_tags %}
+        <div class="effect-tags">
+          {{ subjective.effect_tags[:14] | join(" · ") }}
+          {% if subjective.effect_tags | length > 14 %}
+          <details class="effect-more"><summary>+ {{ subjective.effect_tags | length - 14 }} more</summary>{{ subjective.effect_tags[14:] | join(" · ") }}</details>
+          {% endif %}
+        </div>
+        {% endif %}
       </section>
       {% endif %}
 
