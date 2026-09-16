@@ -155,24 +155,87 @@ def fetch_article(name: str) -> Article | None:
     return next(iter(_article_sources(name)), None)
 
 
-def fetch_compound_page(name: str) -> CompoundPage:
-    """Compose the full page: compound, every sourced article, dose data."""
+def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> CompoundPage:
+    """Compose the full page: compound, every sourced article, dose data.
+
+    `defer` names the expensive fields to skip on the first paint —
+    "references" (PubMed) and "cross_references" (the resolver fanout) are
+    served later through their own entry points by the web shell.
+
+    The remaining sources run in parallel: PubChem, Wikipedia, and
+    PsychonautWiki are different hosts with different rate limits, so cold
+    load drops from sum-of-sources to max-of-sources.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    from chemica.sources.psychonaut import PsychonautWikiSource
+    from chemica.sources.pubchem import PubChemSource
+    from chemica.sources.pubmed import PubMedSource
+    from chemica.sources.wikipedia import WikipediaSource
+
+    pw = PsychonautWikiSource()
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        tasks = {
+            "compound": pool.submit(_try, PubChemSource().fetch_compound, name),
+            "wikipedia": pool.submit(_try, WikipediaSource().fetch_article, name),
+            "pw_article": pool.submit(_try, pw.fetch_article, name),
+            "pw_profile": pool.submit(_try, pw.fetch_profile, name),
+        }
+        if "references" not in defer:
+            tasks["references"] = pool.submit(
+                _try, PubMedSource().fetch_references, name
+            )
+        results = {key: future.result() for key, future in tasks.items()}
+
+    ladders, effects = results["pw_profile"] or ([], [])
+    articles = [
+        article
+        for article in (results["wikipedia"], results["pw_article"])
+        if article is not None
+    ]
+    cross_references = (
+        []
+        if "cross_references" in defer
+        else _resolve_cross_references(name, articles, results["compound"])
+    )
+
+    return CompoundPage(
+        compound=results["compound"],
+        articles=articles,
+        dose_ladders=ladders,
+        effects=effects,
+        references=results.get("references") or [],
+        cross_references=cross_references,
+    )
+
+
+def fetch_references(name: str) -> list[Reference]:
+    """Literature citations for the deferred references panel."""
+    from chemica.sources.pubmed import PubMedSource
+
+    return _try(PubMedSource().fetch_references, name) or []
+
+
+def fetch_cross_references(name: str) -> list[CrossReference]:
+    """Related-compound resolution for the deferred rail panel.
+
+    Re-derives articles and the compound through the module-level caches —
+    on the fragment path those are warm from the first paint.
+    """
+    articles = list(_article_sources(name))
+    return _resolve_cross_references(name, articles, None)
+
+
+def _resolve_cross_references(
+    name: str, articles: list[Article], compound: Compound | None
+) -> list[CrossReference]:
     from chemica.crossrefs import extract_compound_mentions
     from chemica.sources.mediawiki import page_links as wiki_links
     from chemica.sources.mediawiki import section_links
-    from chemica.sources.psychonaut import PsychonautWikiSource
     from chemica.sources.pubchem import PubChemSource
     from chemica.sources.wikipedia import API as WIKI_API
 
-    from chemica.sources.pubmed import PubMedSource
-
-    pw = PsychonautWikiSource()
-    ladders, effects = pw.fetch_profile(name)
-    articles = list(_article_sources(name))
     source = PubChemSource()
-    compound = source.fetch_compound(name)
-    references = PubMedSource().fetch_references(name)
-
     article_text = "\n".join(
         section.text for article in articles for section in article.sections
     )
@@ -206,6 +269,9 @@ def fetch_compound_page(name: str) -> CompoundPage:
     # guesses on CID collision. by_cid keeps the first occurrence per
     # compound. Self-references are filtered by resolved CID, not the raw
     # query string, so aliases (Preludin → phenmetrazine) can't slip through.
+    # On the deferred path `compound` may be None; resolve it lazily there.
+    if compound is None:
+        compound = source.fetch_compound(name)
     by_cid: dict[int, CrossReference] = {}
     for candidate in list(link_candidates) + list(text_candidates):
         target = resolved.get(candidate)
@@ -215,16 +281,7 @@ def fetch_compound_page(name: str) -> CompoundPage:
             continue
         if target.cid not in by_cid:
             by_cid[target.cid] = CrossReference(candidate, target)
-    cross_references = list(by_cid.values())[:12]
-
-    return CompoundPage(
-        compound=compound,
-        articles=articles,
-        dose_ladders=ladders,
-        effects=effects,
-        references=references,
-        cross_references=cross_references,
-    )
+    return list(by_cid.values())[:12]
 
 
 def _article_sources(name: str):
@@ -234,6 +291,14 @@ def _article_sources(name: str):
     from chemica.sources.wikipedia import WikipediaSource
 
     for source in (WikipediaSource(), PsychonautWikiSource()):
-        article = source.fetch_article(name)
+        article = _try(source.fetch_article, name)
         if article is not None:
             yield article
+
+
+def _try(fn, *args):
+    """A source error becomes a decline, not a page failure."""
+    try:
+        return fn(*args)
+    except Exception:
+        return None

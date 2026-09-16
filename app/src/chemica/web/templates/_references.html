@@ -1,0 +1,19 @@
+<section class="panel references-panel">
+  <h2 class="panel-heading">References <span class="source-tag source-pubmed">PubMed</span></h2>
+  {% if references %}
+  <ul class="reference-list">
+    {% for ref in references %}
+    <li class="reference-item">
+      {% if ref.url %}
+        <a href="{{ ref.url }}">{{ ref.title }}</a>
+      {% else %}
+        {{ ref.title }}
+      {% endif %}
+      {% if ref.snippet %}<div class="reference-snippet">{{ ref.snippet }}</div>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="fragment-decline">No PubMed literature found.</p>
+  {% endif %}
+</section>

@@ -18,7 +18,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from chemica.core import Compound, fetch_compound_page
+from chemica.core import (
+    Compound,
+    fetch_compound_page,
+    fetch_cross_references,
+    fetch_references,
+)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -91,9 +96,9 @@ def _minutes(text: str | None) -> float | None:
     if not nums:
         return None
     value = sum(float(n) for n in nums) / len(nums)
-    if "hour" in text:
+    if re.search(r"\bhours?\b|\d\s*h\b", text, re.IGNORECASE):
         return value * 60
-    if "second" in text:
+    if re.search(r"\bseconds?\b|\d\s*s\b", text, re.IGNORECASE):
         return value / 60
     return value
 
@@ -130,7 +135,7 @@ def submit(request: Request, q: str = "") -> HTMLResponse:
 
 @app.get("/compound/{name}", response_class=HTMLResponse)
 def compound_page(request: Request, name: str) -> HTMLResponse:
-    page = fetch_compound_page(name)
+    page = fetch_compound_page(name, defer={"references", "cross_references"})
 
     if page.compound is None and not page.articles:
         return templates.TemplateResponse(
@@ -153,6 +158,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
         "article.html",
         {
             "title": title,
+            "name": name,
             "compound": compound,
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
@@ -162,9 +168,26 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
                 {"route": e.route, "total": e.total, "segments": _segments(e)}
                 for e in page.effects
             ],
-            "references": page.references,
-            "cross_references": page.cross_references,
         },
+    )
+
+
+@app.get("/compound/{name}/references", response_class=HTMLResponse)
+def references_fragment(request: Request, name: str) -> HTMLResponse:
+    """Deferred PubMed panel — loaded by fragments.js after first paint."""
+    return templates.TemplateResponse(
+        request, "_references.html", {"references": fetch_references(name)}
+    )
+
+
+@app.get("/compound/{name}/cross-references")
+def cross_references_fragment(request: Request, name: str) -> Response:
+    """Deferred related-compounds rail — empty result removes the slot."""
+    xrefs = fetch_cross_references(name)
+    if not xrefs:
+        return Response(status_code=204)
+    return templates.TemplateResponse(
+        request, "_cross_refs.html", {"cross_references": xrefs}
     )
 
 

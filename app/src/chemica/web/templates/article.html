@@ -92,23 +92,9 @@
         {{ render_section(section, children) }}
       {% endfor %}
 
-      {% if references %}
-      <section class="panel references-panel">
-        <h2 class="panel-heading">References <span class="source-tag source-pubmed">PubMed</span></h2>
-        <ul class="reference-list">
-          {% for ref in references %}
-          <li class="reference-item">
-            {% if ref.url %}
-              <a href="{{ ref.url }}">{{ ref.title }}</a>
-            {% else %}
-              {{ ref.title }}
-            {% endif %}
-            {% if ref.snippet %}<div class="reference-snippet">{{ ref.snippet }}</div>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      </section>
-      {% endif %}
+      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/references">
+        <div class="fragment-loading">Loading references&#8230;</div>
+      </div>
     </div>
 
     <aside class="rail">
@@ -135,28 +121,11 @@
       </div>
       {% endif %}
 
-      {% if cross_references %}
-      <div class="panel cross-refs-panel">
-        <h2 class="panel-heading rail-heading">Related compounds</h2>
-        <ul class="cross-ref-list">
-          {% for xref in cross_references %}
-          <li class="cross-ref-item">
-            <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
-            {% if xref.compound and xref.compound.cid %}
-            <div class="xref-card">
-              <img src="/structure/{{ xref.compound.cid }}.png" alt="" loading="lazy">
-              <div class="xref-card-name">{{ xref.name }}</div>
-              {% if xref.compound.formula %}
-              <div class="xref-card-formula">{{ xref.compound.formula | subscript | safe }}</div>
-              {% endif %}
-            </div>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
+      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/cross-references">
+        <div class="fragment-loading">Loading related compounds&#8230;</div>
       </div>
-      {% endif %}
     </aside>
   </div>
 </div>
+<script src="/static/fragments.js" defer></script>
 {% endblock %}

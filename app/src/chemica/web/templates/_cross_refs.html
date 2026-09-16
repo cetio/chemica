@@ -1,0 +1,19 @@
+<div class="panel cross-refs-panel">
+  <h2 class="panel-heading rail-heading">Related compounds</h2>
+  <ul class="cross-ref-list">
+    {% for xref in cross_references %}
+    <li class="cross-ref-item">
+      <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
+      {% if xref.compound and xref.compound.cid %}
+      <div class="xref-card">
+        <img src="/structure/{{ xref.compound.cid }}.png" alt="" loading="lazy">
+        <div class="xref-card-name">{{ xref.name }}</div>
+        {% if xref.compound.formula %}
+        <div class="xref-card-formula">{{ xref.compound.formula | subscript | safe }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
