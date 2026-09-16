@@ -60,6 +60,25 @@ def extract_sections(api: str, title: str) -> list[Section]:
     return parse_sections(extract, title)
 
 
+def page_links(api: str, title: str, limit: int = 50) -> list[str]:
+    """Return the main-namespace page titles this article links to."""
+    url = (
+        f"{api}?action=query&prop=links&titles={requests.utils.quote(title)}"
+        f"&plnamespace=0&pllimit={limit}&format=json&formatversion=2"
+    )
+    resp = requests.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return []
+    pages = resp.json().get("query", {}).get("pages", [])
+    if not pages:
+        return []
+    page = pages[0]
+    if "missing" in page:
+        return []
+    links = page.get("links", [])
+    return [link["title"] for link in links]
+
+
 def parse_sections(extract: str, title: str) -> list[Section]:
     """Split a plain-text extract into titled sections at == markers.
 

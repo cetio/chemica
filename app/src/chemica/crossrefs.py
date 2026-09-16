@@ -45,6 +45,13 @@ def find_cross_references(
 ) -> list[CrossReference]:
     """Return all compound mentions in *text* that resolve to a real compound."""
     candidates = extract_compound_mentions(text)
+    return resolve_candidates(candidates, resolver)
+
+
+def resolve_candidates(
+    candidates: set[str], resolver: Callable[[str], Compound | None]
+) -> list[CrossReference]:
+    """Resolve a set of candidate names and return the ones that map to compounds."""
     ret: list[CrossReference] = []
     seen: set[int] = set()
     for name in candidates:

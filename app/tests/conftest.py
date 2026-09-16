@@ -77,6 +77,9 @@ def _fixture_for_url(url: str) -> Path | None:
         if "prop=extracts" in url:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "wikipedia" / f"extracts_{_safe_name(unquote(title))}.json"
+        if "prop=links" in url:
+            title = _extract_query_param(url, "titles")
+            return FIXTURE_DIR / "wikipedia" / f"links_{_safe_name(unquote(title))}.json"
         if "action=query" in url:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "wikipedia" / f"query_{_safe_name(unquote(title))}.json"

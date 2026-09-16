@@ -146,9 +146,11 @@ def fetch_article(name: str) -> Article | None:
 
 def fetch_compound_page(name: str) -> CompoundPage:
     """Compose the full page: compound, every sourced article, dose data."""
-    from chemica.crossrefs import find_cross_references
+    from chemica.crossrefs import find_cross_references, resolve_candidates
+    from chemica.sources.mediawiki import page_links as wiki_links
     from chemica.sources.psychonaut import PsychonautWikiSource
     from chemica.sources.pubchem import PubChemSource
+    from chemica.sources.wikipedia import API as WIKI_API
 
     pw = PsychonautWikiSource()
     ladders, effects = pw.fetch_profile(name)
@@ -166,7 +168,31 @@ def fetch_compound_page(name: str) -> CompoundPage:
     article_text = "\n".join(
         section.text for article in articles for section in article.sections
     )
-    cross_references = find_cross_references(article_text, resolver)
+    text_candidates = find_cross_references(article_text, resolver)
+
+    wiki_article = next(
+        (a for a in articles if a.source == "wikipedia"), None
+    )
+    link_candidates: set[str] = set()
+    if wiki_article:
+        raw_titles = wiki_links(WIKI_API, wiki_article.title)
+        # A link is a real mention only if it appears in the article text,
+        # filtering out navbox/template-only links (e.g. the Stimulants box).
+        text_lower = article_text.lower()
+        link_candidates = {
+            title.split("(")[0].strip()
+            for title in raw_titles
+            if title.split("(")[0].strip().lower() in text_lower
+        }
+    link_refs = resolve_candidates(link_candidates, resolver)
+
+    # Merge, preferring link-based references and keeping names stable.
+    by_cid: dict[int, CrossReference] = {}
+    for ref in text_candidates + link_refs:
+        if ref.compound.cid is not None and ref.compound.cid not in by_cid:
+            by_cid[ref.compound.cid] = ref
+    cross_references = list(by_cid.values())[:12]
+
     return CompoundPage(
         compound=compound,
         articles=articles,
