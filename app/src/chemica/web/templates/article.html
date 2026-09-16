@@ -115,6 +115,9 @@
             {% endfor %}
           </table>
         {% endfor %}
+        {% if compound.salt_form %}
+          <p class="infobox-source">Resolved via {{ compound.salt_form }} (salt)</p>
+        {% endif %}
         {% if article and article.url %}
           <p class="infobox-source">Source: <a href="{{ article.url }}">{{ article.title }}</a></p>
         {% endif %}
