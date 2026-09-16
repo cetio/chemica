@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from chemica.core import Compound, fetch_article, fetch_compound
+from chemica.core import Compound, fetch_compound_page
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -76,13 +76,22 @@ def submit(request: Request, q: str = "") -> HTMLResponse:
 
 @app.get("/compound/{name}", response_class=HTMLResponse)
 def compound_page(request: Request, name: str) -> HTMLResponse:
-    compound = fetch_compound(name)
-    article = fetch_article(name)
+    page = fetch_compound_page(name)
 
-    if compound is None and article is None:
+    if page.compound is None and not page.articles:
         return templates.TemplateResponse(
             request, "not_found.html", {"query": name}, status_code=404
         )
+
+    compound = page.compound
+
+    by_source = {a.source: a for a in page.articles if a.source}
+    article = (
+        by_source.get("wikipedia")
+        or by_source.get("psychonautwiki")
+        or (page.articles[0] if page.articles else None)
+    )
+    references = [a for a in page.articles if a.source == "pubmed"]
 
     return templates.TemplateResponse(
         request,
@@ -91,5 +100,8 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "compound": compound,
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
+            "dosages": page.dose_ladders,
+            "references": references,
+            "cross_references": page.cross_references,
         },
     )

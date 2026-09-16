@@ -3,15 +3,15 @@
   "query": {
     "normalized": [
       {
-        "from": "aspirin",
-        "to": "Aspirin"
+        "from": "caffeine",
+        "to": "Caffeine"
       }
     ],
     "pages": {
-      "1525": {
+      "6868": {
         "ns": 0,
-        "pageid": 1525,
-        "title": "Aspirin"
+        "pageid": 6868,
+        "title": "Caffeine"
       }
     }
   }

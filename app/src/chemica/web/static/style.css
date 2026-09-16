@@ -115,3 +115,52 @@ button:hover { border-color: var(--accent); }
 .infobox-table td { text-align: left; word-break: break-word; padding: 2px 0; }
 .infobox-source { font-size: 12px; color: var(--dim); }
 .infobox-source a { color: var(--accent); text-decoration: none; }
+
+.structure-image
+{
+    display: block;
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+    margin: 0 auto 10px;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.panel
+{
+    background: var(--panel);
+    border: 1px solid #2a2f38;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 22px;
+}
+
+.panel-heading { font-size: 20px; margin: 0 0 4px; font-weight: 650; }
+.panel-source { font-size: 12px; color: var(--dim); margin: 0 0 12px; }
+.panel-note { font-size: 12px; color: var(--dim); margin: 8px 0 0; }
+
+.dosage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dosage-table th
+{
+    text-align: left;
+    color: var(--dim);
+    font-weight: 500;
+    padding: 4px 10px 4px 0;
+    border-bottom: 1px solid var(--line);
+}
+.dosage-table td { padding: 4px 10px 4px 0; }
+
+.reference-list, .cross-ref-list { margin: 0; padding-left: 18px; }
+.reference-item, .cross-ref-item { margin: 4px 0; font-size: 14px; }
+.cross-ref-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding-left: 0; }
+.cross-ref-item a
+{
+    display: inline-block;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+}
+.cross-ref-item a:hover { border-color: var(--accent); text-decoration: none; }

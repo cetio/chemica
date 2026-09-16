@@ -1,0 +1,25 @@
+{
+  "esearchresult": {
+    "count": "80590",
+    "idlist": [
+      "42742137",
+      "42739773",
+      "42738371",
+      "42736984",
+      "42736619"
+    ],
+    "querytranslation": "\"aspirin\"[Supplementary Concept] OR \"aspirin\"[All Fields] OR \"aspirin\"[MeSH Terms] OR \"aspirins\"[All Fields] OR \"aspirin s\"[All Fields] OR \"aspirine\"[All Fields]",
+    "retmax": "5",
+    "retstart": "0",
+    "translationset": [
+      {
+        "from": "aspirin",
+        "to": "\"aspirin\"[Supplementary Concept] OR \"aspirin\"[All Fields] OR \"aspirin\"[MeSH Terms] OR \"aspirins\"[All Fields] OR \"aspirin's\"[All Fields] OR \"aspirine\"[All Fields]"
+      }
+    ]
+  },
+  "header": {
+    "type": "esearch",
+    "version": "0.3"
+  }
+}

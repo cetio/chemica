@@ -30,7 +30,10 @@ FIXTURE_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 WIKI_API = "https://en.wikipedia.org/w/api.php"
-WIKI_REST = "https://en.wikipedia.org/api/rest_v1"
+PW_API = "https://psychonautwiki.org/w/api.php"
+EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+
+HEADERS = {"User-Agent": "chemica/0.1 (compound reference app; contact: cet)"}
 
 
 def record(query: str) -> None:
@@ -38,6 +41,8 @@ def record(query: str) -> None:
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
     _record_pubchem(query)
     _record_wikipedia(query)
+    _record_psychonaut(query)
+    _record_pubmed(query)
 
 
 def _record_pubchem(query: str) -> None:
@@ -74,9 +79,9 @@ def _record_wikipedia(query: str) -> None:
     wiki_dir = FIXTURE_DIR / "wikipedia"
     wiki_dir.mkdir(parents=True, exist_ok=True)
 
-    # query endpoint — keyed by compound name
+    # query endpoint — keyed by compound name (title resolution)
     query_url = f"{WIKI_API}?action=query&titles={quote(query)}&format=json&redirects=1"
-    query_resp = requests.get(query_url, timeout=15)
+    query_resp = requests.get(query_url, timeout=15, headers=HEADERS)
     if query_resp.status_code != 200:
         return
     query_body = query_resp.json()
@@ -89,11 +94,82 @@ def _record_wikipedia(query: str) -> None:
         return
     title = page.get("title", query)
 
-    # summary endpoint — keyed by resolved title
-    summary_url = f"{WIKI_REST}/page/summary/{quote(title)}"
-    summary_resp = requests.get(summary_url, timeout=15)
-    if summary_resp.status_code == 200:
-        _write(wiki_dir / f"summary_{_safe(title)}.json", summary_resp.json())
+    # extracts endpoint — keyed by resolved title (full sectioned article)
+    extracts_url = (
+        f"{WIKI_API}?action=query&prop=extracts&titles={quote(title)}"
+        f"&format=json&explaintext=1&exsectionformat=wiki"
+    )
+    extracts_resp = requests.get(extracts_url, timeout=15, headers=HEADERS)
+    if extracts_resp.status_code == 200:
+        _write(wiki_dir / f"extracts_{_safe(title)}.json", extracts_resp.json())
+
+
+def _record_psychonaut(query: str) -> None:
+    pw_dir = FIXTURE_DIR / "psychonaut"
+    pw_dir.mkdir(parents=True, exist_ok=True)
+
+    # query endpoint — keyed by compound name (title resolution)
+    query_url = f"{PW_API}?action=query&titles={quote(query)}&format=json&redirects=1"
+    query_resp = requests.get(query_url, timeout=15, headers=HEADERS)
+    if query_resp.status_code != 200:
+        return
+    query_body = query_resp.json()
+    _write(pw_dir / f"query_{_safe(query)}.json", query_body)
+    pages = query_body.get("query", {}).get("pages", {})
+    if not pages:
+        return
+    page = next(iter(pages.values()))
+    if "missing" in page:
+        return
+    title = page.get("title", query)
+
+    # extracts endpoint — keyed by resolved title
+    extracts_url = (
+        f"{PW_API}?action=query&prop=extracts&titles={quote(title)}"
+        f"&format=json&explaintext=1&exsectionformat=wiki"
+    )
+    extracts_resp = requests.get(extracts_url, timeout=15, headers=HEADERS)
+    if extracts_resp.status_code == 200:
+        _write(pw_dir / f"extracts_{_safe(title)}.json", extracts_resp.json())
+
+    # SubstanceBox wikitext — keyed by resolved title (dosage/duration profile)
+    box_url = (
+        f"{PW_API}?action=parse&prop=wikitext&format=json&formatversion=2"
+        f"&page={quote('Template:SubstanceBox/' + title)}"
+    )
+    box_resp = requests.get(box_url, timeout=15, headers=HEADERS)
+    if box_resp.status_code == 200:
+        _write(pw_dir / f"substancebox_{_safe(title)}.json", box_resp.json())
+
+
+def _record_pubmed(query: str) -> None:
+    pubmed_dir = FIXTURE_DIR / "pubmed"
+    pubmed_dir.mkdir(parents=True, exist_ok=True)
+
+    # esearch endpoint — keyed by compound name
+    search_url = (
+        f"{EUTILS}/esearch.fcgi?db=pubmed&term={quote(query)}"
+        f"&retmax=5&retmode=json&tool=chemica&email=cet"
+    )
+    search_resp = requests.get(search_url, timeout=15, headers=HEADERS)
+    if search_resp.status_code != 200:
+        return
+    search_body = search_resp.json()
+    _write(pubmed_dir / f"esearch_{_safe(query)}.json", search_body)
+    pmids = search_body.get("esearchresult", {}).get("idlist", [])
+    if not pmids:
+        return
+
+    # efetch endpoint — keyed by the PMID list (raw XML, stored as text)
+    fetch_url = (
+        f"{EUTILS}/efetch.fcgi?db=pubmed&id={','.join(pmids)}"
+        f"&rettype=abstract&retmode=xml&tool=chemica&email=cet"
+    )
+    fetch_resp = requests.get(fetch_url, timeout=15, headers=HEADERS)
+    if fetch_resp.status_code == 200:
+        (pubmed_dir / f"efetch_{','.join(pmids)}.xml").write_text(
+            fetch_resp.text, encoding="utf-8"
+        )
 
 
 def _write(path: Path, payload: object) -> None:

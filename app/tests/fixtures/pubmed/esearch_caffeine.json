@@ -1,0 +1,25 @@
+{
+  "esearchresult": {
+    "count": "43007",
+    "idlist": [
+      "42744719",
+      "42744487",
+      "42744289",
+      "42743697",
+      "42743412"
+    ],
+    "querytranslation": "\"caffein\"[All Fields] OR \"caffeinated\"[All Fields] OR \"caffeine\"[Supplementary Concept] OR \"caffeine\"[All Fields] OR \"caffeine\"[MeSH Terms] OR \"caffeine s\"[All Fields] OR \"caffeines\"[All Fields] OR \"caffeinism\"[All Fields]",
+    "retmax": "5",
+    "retstart": "0",
+    "translationset": [
+      {
+        "from": "caffeine",
+        "to": "\"caffein\"[All Fields] OR \"caffeinated\"[All Fields] OR \"caffeine\"[Supplementary Concept] OR \"caffeine\"[All Fields] OR \"caffeine\"[MeSH Terms] OR \"caffeine's\"[All Fields] OR \"caffeines\"[All Fields] OR \"caffeinism\"[All Fields]"
+      }
+    ]
+  },
+  "header": {
+    "type": "esearch",
+    "version": "0.3"
+  }
+}

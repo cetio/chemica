@@ -23,6 +23,12 @@
     {% if compound %}
     <aside class="infobox">
       <div class="infobox-name">{{ compound.name }}</div>
+      {% if compound.cid %}
+        <img class="structure-image"
+             src="https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{{ compound.cid }}/PNG"
+             alt="2D structure of {{ compound.name }}"
+             loading="lazy">
+      {% endif %}
       {% for group_name, rows in infobox %}
         <h3 class="infobox-group">{{ group_name }}</h3>
         <table class="infobox-table">
@@ -37,4 +43,66 @@
     </aside>
     {% endif %}
   </div>
+
+  {% if dosages %}
+  <section class="panel dosage-panel">
+    <h2 class="panel-heading">Dosage</h2>
+    <p class="panel-source">Source: PsychonautWiki</p>
+    <table class="dosage-table">
+      <thead>
+        <tr>
+          <th>Route</th>
+          <th>Threshold</th>
+          <th>Light</th>
+          <th>Common</th>
+          <th>Strong</th>
+          <th>Heavy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dose in dosages %}
+        <tr>
+          <td>{{ dose.route }}</td>
+          <td>{{ dose.threshold }}</td>
+          <td>{{ dose.light }}</td>
+          <td>{{ dose.common }}</td>
+          <td>{{ dose.strong }}</td>
+          <td>{{ dose.heavy }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if references %}
+  <section class="panel references-panel">
+    <h2 class="panel-heading">References</h2>
+    <p class="panel-source">Source: PubMed</p>
+    <ul class="reference-list">
+      {% for ref in references %}
+      <li class="reference-item">
+        {% if ref.url %}
+          <a href="{{ ref.url }}">{{ ref.title }}</a>
+        {% else %}
+          {{ ref.title }}
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if cross_references %}
+  <section class="panel cross-refs-panel">
+    <h2 class="panel-heading">Related compounds</h2>
+    <ul class="cross-ref-list">
+      {% for xref in cross_references %}
+      <li class="cross-ref-item">
+        <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 {% endblock %}

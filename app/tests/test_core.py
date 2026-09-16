@@ -13,9 +13,18 @@ from typing import Any
 import pytest
 import requests
 
-from chemica import Article, Compound, fetch_article, fetch_compound
-from chemica.core import Section, Source
+from chemica import (
+    Article,
+    Compound,
+    CompoundPage,
+    fetch_article,
+    fetch_compound,
+    fetch_compound_page,
+)
+from chemica.core import DoseLadder, EffectsProfile, Section, Source
+from chemica.sources.psychonaut import PsychonautWikiSource
 from chemica.sources.pubchem import PubChemSource
+from chemica.sources.pubmed import PubMedSource
 from chemica.sources.wikipedia import WikipediaSource
 
 # Values recorded from the live APIs for aspirin.
@@ -101,6 +110,8 @@ def test_fetch_article_missing_returns_none(monkeypatch):
 def test_sources_satisfy_source_protocol():
     assert isinstance(PubChemSource(), Source)
     assert isinstance(WikipediaSource(), Source)
+    assert isinstance(PsychonautWikiSource(), Source)
+    assert isinstance(PubMedSource(), Source)
 
 
 def test_sources_decline_what_they_do_not_own():
@@ -108,6 +119,89 @@ def test_sources_decline_what_they_do_not_own():
     # same seam later.
     assert PubChemSource().fetch_article("aspirin") is None
     assert WikipediaSource().fetch_compound("aspirin") is None
+    assert PsychonautWikiSource().fetch_compound("caffeine") is None
+    assert PubMedSource().fetch_compound("aspirin") is None
+
+
+def test_psychonautwiki_article_caffeine(recording):
+    # PsychonautWiki covers recreational substances; caffeine is the demo
+    # compound that exercises every lane.
+    article = PsychonautWikiSource().fetch_article("caffeine")
+
+    assert isinstance(article, Article)
+    assert article.title == "Caffeine"
+    assert article.source == "psychonautwiki"
+    assert article.url == "https://psychonautwiki.org/wiki/Caffeine"
+    assert article.sections[0].heading == "Caffeine"
+    assert len(article.sections) > 5
+
+
+def test_psychonautwiki_profile_caffeine(recording):
+    # Recorded SubstanceBox wikitext for Caffeine: oral ladder 25 mg threshold
+    # through "500 mg +" heavy, plus a full duration timeline.
+    ladders, effects = PsychonautWikiSource().fetch_profile("caffeine")
+
+    oral = next(l for l in ladders if l.route == "Oral")
+    assert isinstance(oral, DoseLadder)
+    assert oral.threshold == "25 mg"
+    assert oral.common == "50 - 150 mg"
+    assert oral.heavy == "500 mg +"
+    assert oral.bioavailability == "~100%"
+
+    oral_fx = next(e for e in effects if e.route == "Oral")
+    assert isinstance(oral_fx, EffectsProfile)
+    assert oral_fx.onset == "5 - 10 minutes"
+    assert oral_fx.total == "2 - 5 hours"
+    assert oral_fx.aftereffects == "3 - 6 hours"
+
+
+def test_psychonautwiki_declines_aspirin(recording):
+    # Recorded live: PsychonautWiki's query for aspirin returns a missing page.
+    # The source declines rather than serving a search-results page.
+    assert PsychonautWikiSource().fetch_article("aspirin") is None
+    assert PsychonautWikiSource().fetch_profile("aspirin") == ([], [])
+
+
+def test_pubmed_article_aspirin(recording):
+    # Recorded esearch/efetch for aspirin: five recent papers, each a section.
+    article = PubMedSource().fetch_article("aspirin")
+
+    assert isinstance(article, Article)
+    assert article.source == "pubmed"
+    assert article.url == "https://pubmed.ncbi.nlm.nih.gov/?term=aspirin"
+    assert len(article.sections) == 5
+    for paper in article.sections:
+        assert paper.heading  # paper title
+        assert paper.text  # abstract
+
+
+def test_fetch_article_stays_first_hit(recording):
+    # The web shell's contract: one article, first source that answers.
+    article = fetch_article("aspirin")
+    assert article is not None
+    assert article.title == "Aspirin"
+    assert article.url.startswith("https://en.wikipedia.org/")
+
+
+def test_fetch_compound_page_caffeine(recording):
+    # The composer the front-ends will bind to: compound + all articles +
+    # dose data in one call. Caffeine exercises every lane.
+    page = fetch_compound_page("caffeine")
+
+    assert isinstance(page, CompoundPage)
+    assert page.compound is not None
+    assert page.compound.cid == 2519
+    assert page.compound.formula == "C8H10N4O2"
+
+    by_source = {a.source: a for a in page.articles}
+    assert set(by_source) == {"wikipedia", "psychonautwiki", "pubmed"}
+    assert by_source["wikipedia"].title == "Caffeine"
+    assert by_source["psychonautwiki"].sections
+
+    routes = {l.route for l in page.dose_ladders}
+    assert "Oral" in routes
+    assert {e.route for e in page.effects} >= {"Oral"}
+    assert page.cross_references is not None
 
 
 def test_models_are_immutable(recording):

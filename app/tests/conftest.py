@@ -21,14 +21,22 @@ FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures"
 
 
 class FixtureResponse:
-    """Stand-in for requests.Response — just the bits the sources read."""
+    """Stand-in for requests.Response — just the bits the sources read.
 
-    def __init__(self, payload: Any, status: int = 200):
-        self._payload = payload
+    Holds the fixture file's raw text: .json() parses it for JSON endpoints,
+    .text returns it for XML endpoints (PubMed efetch).
+    """
+
+    def __init__(self, text: str | None, status: int = 200):
+        self._text = text or ""
         self.status_code = status
 
     def json(self) -> Any:
-        return self._payload
+        return json.loads(self._text)
+
+    @property
+    def text(self) -> str:
+        return self._text
 
 
 @pytest.fixture
@@ -40,7 +48,7 @@ def recording(monkeypatch):
         path = _fixture_for_url(url)
         if path is None or not path.exists():
             return FixtureResponse(None, status=404)
-        return FixtureResponse(json.loads(path.read_text(encoding="utf-8")))
+        return FixtureResponse(path.read_text(encoding="utf-8"))
 
     monkeypatch.setattr(requests, "get", fake_get)
     return fake_get
@@ -66,9 +74,31 @@ def _fixture_for_url(url: str) -> Path | None:
         if "/rest_v1/page/summary/" in url:
             title = url.split("/rest_v1/page/summary/", 1)[1]
             return FIXTURE_DIR / "wikipedia" / f"summary_{_safe_name(unquote(title))}.json"
+        if "prop=extracts" in url:
+            title = _extract_query_param(url, "titles")
+            return FIXTURE_DIR / "wikipedia" / f"extracts_{_safe_name(unquote(title))}.json"
         if "action=query" in url:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "wikipedia" / f"query_{_safe_name(unquote(title))}.json"
+    if "psychonautwiki.org" in url:
+        if "action=parse" in url:
+            # page=Template:SubstanceBox/{Title} — key on the substance title.
+            page = _extract_query_param(url, "page")
+            title = unquote(page).rsplit("/", 1)[-1]
+            return FIXTURE_DIR / "psychonaut" / f"substancebox_{_safe_name(title)}.json"
+        if "prop=extracts" in url:
+            title = _extract_query_param(url, "titles")
+            return FIXTURE_DIR / "psychonaut" / f"extracts_{_safe_name(unquote(title))}.json"
+        if "action=query" in url:
+            title = _extract_query_param(url, "titles")
+            return FIXTURE_DIR / "psychonaut" / f"query_{_safe_name(unquote(title))}.json"
+    if "eutils.ncbi.nlm.nih.gov" in url:
+        if "esearch" in url:
+            term = _extract_query_param(url, "term")
+            return FIXTURE_DIR / "pubmed" / f"esearch_{_safe_name(unquote(term))}.json"
+        if "efetch" in url:
+            ids = _extract_query_param(url, "id")
+            return FIXTURE_DIR / "pubmed" / f"efetch_{ids}.xml"
     return None
 
 
