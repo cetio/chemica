@@ -106,6 +106,7 @@
                src="/structure/{{ compound.cid }}.png"
                alt="2D structure of {{ compound.name }}"
                loading="lazy">
+          <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
         {% endif %}
         {% for group_name, rows in infobox %}
           <h3 class="infobox-group">{{ group_name }}</h3>
@@ -131,4 +132,8 @@
   </div>
 </div>
 <script src="/static/fragments.js" defer></script>
+{% if compound and compound.cid %}
+<script src="/static/3dmol-min.js"></script>
+<script src="/static/viewer3d.js" defer></script>
+{% endif %}
 {% endblock %}
