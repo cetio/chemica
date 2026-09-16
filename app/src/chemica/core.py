@@ -80,6 +80,16 @@ class Reference:
 
 
 @dataclass(frozen=True)
+class HazardProfile:
+    """GHS hazard data for the compound — pictograms, signal, H-statements."""
+
+    pictograms: list[str] = field(default_factory=list)  # e.g. "GHS07"
+    signal: str | None = None  # "Warning" or "Danger"
+    statements: list[str] = field(default_factory=list)  # "H302: Harmful if swallowed"
+    source: str | None = "pubchem"
+
+
+@dataclass(frozen=True)
 class DoseLadder:
     """One route's dose ladder (threshold → heavy), as printed by the source.
 
@@ -227,6 +237,17 @@ def fetch_cross_references(name: str) -> list[CrossReference]:
     """
     articles = list(_article_sources(name))
     return _resolve_cross_references(name, articles, None)
+
+
+def fetch_hazards(name: str) -> HazardProfile | None:
+    """GHS hazard data for the deferred hazards panel."""
+    from chemica.sources.pubchem import PubChemSource
+
+    source = PubChemSource()
+    compound = _try(source.fetch_compound, name)
+    if compound is None or compound.cid is None:
+        return None
+    return _try(source.fetch_hazards, compound.cid)
 
 
 def _resolve_cross_references(

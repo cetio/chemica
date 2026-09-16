@@ -17,7 +17,7 @@ from typing import Any
 import requests
 
 from chemica import cache
-from chemica.core import Article, Compound
+from chemica.core import Article, Compound, HazardProfile
 
 # CAS Registry Numbers look like 58-08-2: 2-7 digits, dash, 2 digits, dash, 1 digit.
 _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
@@ -191,6 +191,64 @@ class PubChemSource:
             return []
         info = resp.json().get("InformationList", {}).get("Information", [])
         return info[0].get("Synonym", []) if info else []
+
+    def fetch_hazards(self, cid: int) -> HazardProfile | None:
+        """GHS classification via PUG-View: pictograms, signal word, and
+        H-statements, deduplicated across the notifier entries."""
+        url = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/"
+            f"compound/{cid}/JSON?heading=Safety+and+Hazards"
+        )
+        resp = cache.get(url, timeout=20)
+        if resp.status_code != 200:
+            return None
+        section = _find_section(
+            resp.json().get("Record", {}).get("Section", []),
+            "GHS Classification",
+        )
+        if section is None:
+            return None
+        pictograms: list[str] = []
+        signal: str | None = None
+        statements: list[str] = []
+        for info in section.get("Information", []):
+            strings = [
+                item.get("String", "")
+                for item in info.get("Value", {}).get("StringWithMarkup", [])
+            ]
+            name = info.get("Name")
+            if name == "Pictogram(s)":
+                for item in info["Value"].get("StringWithMarkup", []):
+                    for markup in item.get("Markup", []):
+                        code = markup.get("URL", "").rsplit("/", 1)[-1].removesuffix(".svg")
+                        if code.startswith("GHS") and code not in pictograms:
+                            pictograms.append(code)
+            elif name == "Signal":
+                for s in strings:
+                    if s.strip() == "Danger":
+                        signal = "Danger"
+                    elif s.strip() == "Warning" and signal is None:
+                        signal = "Warning"
+            elif name == "GHS Hazard Statements":
+                for s in strings:
+                    text = s.strip()
+                    if text and text not in statements:
+                        statements.append(text)
+        if not (pictograms or signal or statements):
+            return None
+        return HazardProfile(
+            pictograms=pictograms, signal=signal, statements=statements
+        )
+
+
+def _find_section(sections: list[dict], heading: str) -> dict | None:
+    for section in sections:
+        if section.get("TOCHeading") == heading:
+            return section
+        found = _find_section(section.get("Section", []), heading)
+        if found is not None:
+            return found
+    return None
 
 
 def _float(value: Any) -> float | None:
