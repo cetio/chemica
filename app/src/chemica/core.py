@@ -35,6 +35,9 @@ class Compound:
     inchi: str | None = None
     inchikey: str | None = None
     cas: str | None = None
+    # Set when the query resolved to a salt record and we fell through to the
+    # freebase — carries the salt's PubChem title ("Phenmetrazine hydrochloride").
+    salt_form: str | None = None
     synonyms: list[str] = field(default_factory=list)
     raw: dict[str, Any] = field(default_factory=dict)
 

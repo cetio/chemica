@@ -22,6 +22,10 @@ from chemica.core import Article, Compound
 # CAS Registry Numbers look like 58-08-2: 2-7 digits, dash, 2 digits, dash, 1 digit.
 _CAS_RE = re.compile(r"^\d{2,7}-\d{2}-\d$")
 
+# Element symbols in a SMILES fragment — used to pick the largest fragment of
+# a dot-disconnected (salt/mixture) record.
+_ATOM_RE = re.compile(r"[A-Z][a-z]?")
+
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 
 # Name → resolved Compound. Module-level because the core instantiates fresh
@@ -56,7 +60,34 @@ class PubChemSource:
         if cid is None:
             return None
         props = self._properties(cid)
+        base_cid = self._freebase_cid(props)
+        if base_cid is not None and base_cid != cid:
+            base_props = self._properties(base_cid)
+            if base_props:
+                return self._shape(
+                    query, base_cid, base_props, salt_form=props.get("Title")
+                )
         return self._shape(query, cid, props)
+
+    def _freebase_cid(self, props: dict[str, Any]) -> int | None:
+        """Dot-disconnected SMILES marks a salt/mixture record — the largest
+        fragment is the drug, the rest is counterion or water. fastidentity
+        on that fragment lands on the freebase CID ('...Cl' salts, hydrates)."""
+        smiles = props.get("ConnectivitySMILES") or ""
+        if "." not in smiles:
+            return None
+        largest = max(
+            smiles.split("."), key=lambda f: len(_ATOM_RE.findall(f))
+        )
+        url = (
+            f"{PUG}/compound/fastidentity/smiles/"
+            f"{requests.utils.quote(largest, safe='')}/cids/JSON"
+        )
+        resp = cache.get(url, timeout=15)
+        if resp.status_code != 200:
+            return None
+        cids = resp.json().get("IdentifierList", {}).get("CID", [])
+        return cids[0] if cids else None
 
     def fetch_article(self, query: str) -> Article | None:
         return None
@@ -127,6 +158,7 @@ class PubChemSource:
         cid: int,
         props: dict[str, Any],
         synonyms: list[str] | None = None,
+        salt_form: str | None = None,
     ) -> Compound:
         if synonyms is None:
             synonyms = self._synonyms(cid)
@@ -147,6 +179,7 @@ class PubChemSource:
             inchi=props.get("InChI"),
             inchikey=props.get("InChIKey"),
             cas=_cas(synonyms),
+            salt_form=salt_form,
             synonyms=synonyms,
             raw=props,
         )
