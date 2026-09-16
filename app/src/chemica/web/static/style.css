@@ -553,12 +553,27 @@ details.section-expander details.section-expander summary
 }
 .profile-halflife li::marker { color: var(--line); }
 
-.effect-tags
+.effect-tags,
+.effect-group
 {
     font-size: 13px;
     color: var(--dim);
     line-height: 1.75;
-    margin-top: 6px;
+}
+
+.effect-tags { margin-top: 6px; }
+.effect-group { margin-top: 5px; }
+
+.effect-group-label
+{
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-right: 8px;
+    min-width: 74px;
 }
 
 .effect-more { display: inline; }

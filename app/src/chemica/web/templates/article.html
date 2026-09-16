@@ -140,13 +140,20 @@
           {% endif %}
         </table>
         {% endif %}
-        {% if subjective.effect_tags %}
-        <div class="effect-tags">
-          {{ subjective.effect_tags[:14] | join(" · ") }}
-          {% if subjective.effect_tags | length > 14 %}
-          <details class="effect-more"><summary>+ {{ subjective.effect_tags | length - 14 }} more</summary>{{ subjective.effect_tags[14:] | join(" · ") }}</details>
-          {% endif %}
-        </div>
+        {% if subjective.effect_groups %}
+          {% for group in subjective.effect_groups %}
+          <div class="effect-group">
+            {% if group.label %}<span class="effect-group-label">{{ group.label }}</span>{% endif %}
+            <span class="effect-group-list">
+              {{ group.effects[:8] | join(" · ") }}
+              {% if group.effects | length > 8 %}
+              <details class="effect-more"><summary>+{{ group.effects | length - 8 }}</summary>{{ group.effects[8:] | join(" · ") }}</details>
+              {% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        {% elif subjective.effect_tags %}
+        <div class="effect-tags">{{ subjective.effect_tags | join(" · ") }}</div>
         {% endif %}
       </section>
       {% endif %}
