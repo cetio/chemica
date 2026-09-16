@@ -243,6 +243,17 @@ def test_fetch_interactions_ketamine(recording):
     assert by_substance["Amphetamines"].severity == "uncertain"
 
 
+def test_fetch_classes_ketamine(recording):
+    # The recorded PW wikitext carries [[Chemical class::…]] and
+    # [[Psychoactive class::…]] annotations in the lead.
+    from chemica.core import fetch_classes
+
+    classes = fetch_classes("ketamine")
+    assert classes is not None
+    assert classes.chemical == "arylcyclohexylamine"
+    assert classes.psychoactive == "dissociative"
+
+
 def test_fetch_drug_profile_ketamine(recording):
     # Recorded PUG-View 'Drug and Medication Information': regulatory fields
     # for a real drug record — ketamine is Approved + Prescription Only.

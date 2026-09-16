@@ -23,6 +23,7 @@ import requests
 from chemica import cache
 from chemica.core import (
     Article,
+    Classifications,
     Compound,
     DoseLadder,
     EffectsProfile,
@@ -64,6 +65,9 @@ _INTERACTIONS_SECTION_RE = re.compile(
     r"={2,4}\s*Dangerous interactions\s*={2,4}(.*?)(?=\n={2,4}|\Z)",
     re.IGNORECASE | re.DOTALL,
 )
+# [[Chemical class::arylcyclohexylamine]] / [[Psychoactive class::dissociative]]
+# — semantic annotations in the lead prose, same :: pattern as interactions.
+_CLASS_RE = re.compile(r"\[\[(Chemical|Psychoactive) class::([^\]]+)\]\]", re.IGNORECASE)
 
 # SubstanceBox wikitext by page title — stable per session, process-lifetime.
 _BOX_CACHE: dict[str, str | None] = {}
@@ -106,13 +110,32 @@ class PsychonautWikiSource:
 
     def fetch_interactions(self, query: str) -> list[Interaction]:
         """Dangerous/unsafe/uncertain interactions from the article wikitext."""
+        wikitext = self._page_wikitext(query)
+        return _interactions(wikitext) if wikitext else []
+
+    def fetch_classes(self, query: str) -> Classifications | None:
+        """Chemical/psychoactive class annotations from the lead wikitext —
+        shares the same page fetch the interactions parser already made."""
+        wikitext = self._page_wikitext(query)
+        if not wikitext:
+            return None
+        fields: dict[str, str] = {}
+        for kind, value in _CLASS_RE.findall(wikitext):
+            fields.setdefault(kind.lower(), value.strip())
+        if not fields:
+            return None
+        return Classifications(
+            chemical=fields.get("chemical"),
+            psychoactive=fields.get("psychoactive"),
+        )
+
+    def _page_wikitext(self, query: str) -> str | None:
         title = mediawiki.resolve_title(API, query)
         if title is None:
-            return []
+            return None
         if title not in _PAGE_WT_CACHE:
             _PAGE_WT_CACHE[title] = self._fetch_wikitext(title)
-        wikitext = _PAGE_WT_CACHE[title]
-        return _interactions(wikitext) if wikitext else []
+        return _PAGE_WT_CACHE[title]
 
     def _substancebox(self, title: str) -> str | None:
         if title not in _BOX_CACHE:

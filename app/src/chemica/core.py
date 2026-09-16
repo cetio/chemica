@@ -123,6 +123,18 @@ class Interaction:
 
 
 @dataclass(frozen=True)
+class Classifications:
+    """PW's semantic class annotations from the article lead —
+    'arylcyclohexylamine' / 'dissociative' for ketamine. Fills the
+    'what kind of thing is this' slot on research chems PubChem's
+    drug record never classifies."""
+
+    chemical: str | None = None
+    psychoactive: str | None = None
+    source: str | None = "psychonautwiki"
+
+
+@dataclass(frozen=True)
 class DoseLadder:
     """One route's dose ladder (threshold → heavy), as printed by the source.
 
@@ -169,6 +181,7 @@ class CompoundPage:
     effects: list[EffectsProfile]
     references: list[Reference] = field(default_factory=list)
     cross_references: list[CrossReference] = field(default_factory=list)
+    classes: Classifications | None = None
 
 
 @runtime_checkable
@@ -226,6 +239,7 @@ def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> Compo
             "wikipedia": pool.submit(_try, WikipediaSource().fetch_article, name),
             "pw_article": pool.submit(_try, pw.fetch_article, name),
             "pw_profile": pool.submit(_try, pw.fetch_profile, name),
+            "pw_classes": pool.submit(_try, pw.fetch_classes, name),
         }
         if "references" not in defer:
             tasks["references"] = pool.submit(_try, PubMedSource().fetch_references, name)
@@ -242,6 +256,7 @@ def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> Compo
         articles=articles,
         dose_ladders=ladders,
         effects=effects,
+        classes=results["pw_classes"],
         references=results.get("references") or [],
         cross_references=cross_references,
     )
@@ -269,6 +284,14 @@ def fetch_interactions(name: str) -> list[Interaction]:
     from chemica.sources.psychonaut import PsychonautWikiSource
 
     return _try(PsychonautWikiSource().fetch_interactions, name) or []
+
+
+def fetch_classes(name: str) -> Classifications | None:
+    """PW chemical/psychoactive class annotations — a first-paint field,
+    cheap because the page wikitext is memoized from the profile fetch."""
+    from chemica.sources.psychonaut import PsychonautWikiSource
+
+    return _try(PsychonautWikiSource().fetch_classes, name)
 
 
 def fetch_drug_profile(name: str) -> DrugProfile | None:
