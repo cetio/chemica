@@ -1,0 +1,20 @@
+<section class="panel interactions-panel" id="panel-interactions">
+  <h2 class="panel-heading">Dangerous interactions <span class="source-tag source-pw">PsychonautWiki</span></h2>
+  {% if interactions %}
+    {% for tier in ["dangerous", "unsafe", "uncertain"] %}
+      {% set items = interactions | selectattr("severity", "equalto", tier) | list %}
+      {% if items %}
+      <div class="interaction-tier">
+        <div class="tier-label tier-{{ tier }}">{{ tier }}</div>
+        <ul class="interaction-list">
+          {% for it in items %}
+          <li><strong>{{ it.substance }}</strong>{% if it.description %} — {{ it.description }}{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+  <p class="fragment-decline">No interaction data on PsychonautWiki.</p>
+  {% endif %}
+</section>

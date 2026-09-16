@@ -24,6 +24,7 @@ from chemica.core import (
     fetch_compound_page,
     fetch_cross_references,
     fetch_hazards,
+    fetch_interactions,
     fetch_references,
 )
 
@@ -217,6 +218,14 @@ def _clean_statements(statements: list[str]) -> list[dict[str, Any]]:
         if code not in best or (entry["pct"] or 0) > (best[code]["pct"] or 0):
             best[code] = entry
     return list(best.values())
+
+
+@app.get("/compound/{name}/interactions", response_class=HTMLResponse)
+def interactions_fragment(request: Request, name: str) -> HTMLResponse:
+    """Deferred PW dangerous-interactions card — data or decline."""
+    return templates.TemplateResponse(
+        request, "_interactions.html", {"interactions": fetch_interactions(name)}
+    )
 
 
 @app.get("/compound/{name}/hazards", response_class=HTMLResponse)

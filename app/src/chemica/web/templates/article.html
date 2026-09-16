@@ -27,6 +27,7 @@
       <div class="toc-title">Contents</div>
       <ol class="toc-list">
         <li><a href="#panel-hazards">Hazards</a></li>
+        <li><a href="#panel-interactions">Dangerous interactions</a></li>
         {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
         {% if timelines %}<li><a href="#panel-effects">Effects timeline</a></li>{% endif %}
         {% for section, children in section_tree %}
@@ -44,6 +45,10 @@
 
       <div class="fragment-slot" id="panel-hazards" data-fragment="/compound/{{ name | urlencode }}/hazards">
         <div class="fragment-loading">Loading hazards&#8230;</div>
+      </div>
+
+      <div class="fragment-slot" id="panel-interactions" data-fragment="/compound/{{ name | urlencode }}/interactions">
+        <div class="fragment-loading">Loading interactions&#8230;</div>
       </div>
 
       {% if dosages %}
