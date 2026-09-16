@@ -22,6 +22,7 @@ from chemica.core import (
     Compound,
     fetch_compound_page,
     fetch_cross_references,
+    fetch_hazards,
     fetch_references,
 )
 
@@ -188,6 +189,37 @@ def cross_references_fragment(request: Request, name: str) -> Response:
         return Response(status_code=204)
     return templates.TemplateResponse(
         request, "_cross_refs.html", {"cross_references": xrefs}
+    )
+
+
+_STMT_RE = re.compile(r"^(H\d+)\s*(?:\(([\d.]+)%\))?:\s*(.*?)\s*(?:\[[^\]]*\])?\s*$")
+
+
+def _clean_statements(statements: list[str]) -> list[dict[str, Any]]:
+    """Dedupe H-statements by code, keeping the highest notifier percentage."""
+    best: dict[str, dict[str, Any]] = {}
+    for stmt in statements:
+        m = _STMT_RE.match(stmt)
+        if not m:
+            continue
+        code, pct, text = m.group(1), m.group(2), m.group(3)
+        entry = {"code": code, "text": text, "pct": float(pct) if pct else None}
+        if code not in best or (entry["pct"] or 0) > (best[code]["pct"] or 0):
+            best[code] = entry
+    return list(best.values())
+
+
+@app.get("/compound/{name}/hazards", response_class=HTMLResponse)
+def hazards_fragment(request: Request, name: str) -> HTMLResponse:
+    """Deferred GHS hazard card — the slot always settles, data or decline."""
+    hazards = fetch_hazards(name)
+    return templates.TemplateResponse(
+        request,
+        "_hazards.html",
+        {
+            "hazards": hazards,
+            "statements": _clean_statements(hazards.statements) if hazards else [],
+        },
     )
 
 

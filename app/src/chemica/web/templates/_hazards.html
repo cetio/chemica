@@ -1,0 +1,20 @@
+<section class="panel hazards-panel" id="panel-hazards">
+  <h2 class="panel-heading">Hazards <span class="source-tag source-pubchem">PubChem GHS</span></h2>
+  {% if hazards %}
+  <div class="hazards-head">
+    {% for pic in hazards.pictograms %}
+    <img class="ghs-icon" src="/static/ghs/{{ pic }}.svg" alt="{{ pic }}" title="{{ pic }}">
+    {% endfor %}
+    {% if hazards.signal %}<span class="ghs-signal ghs-signal-{{ hazards.signal | lower }}">{{ hazards.signal }}</span>{% endif %}
+  </div>
+  {% if statements %}
+  <ul class="hazards-list">
+    {% for s in statements %}
+    <li><code>{{ s.code }}</code> {{ s.text }}{% if s.pct %} <span class="hazards-pct">{{ s.pct }}%</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% else %}
+  <p class="fragment-decline">No GHS hazard data on PubChem.</p>
+  {% endif %}
+</section>

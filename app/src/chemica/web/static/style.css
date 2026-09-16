@@ -275,6 +275,7 @@ details.section-expander details.section-expander summary
 .source-pw { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 .source-pubmed { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
 .source-wp { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+.source-pubchem { background: rgba(52, 211, 153, 0.15); color: #34d399; }
 
 .dosage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
@@ -435,6 +436,49 @@ details.section-expander details.section-expander summary
 }
 
 .fragment-decline { color: var(--dim); font-size: 13px; margin: 0; }
+
+.hazards-head
+{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 8px 0 10px;
+}
+
+.ghs-icon
+{
+    width: 46px;
+    height: 46px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.ghs-signal
+{
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 12.5px;
+    padding: 4px 12px;
+    border-radius: 5px;
+    margin-left: 4px;
+}
+
+.ghs-signal-danger { background: rgba(239, 68, 68, 0.22); color: #ff9d9d; }
+.ghs-signal-warning { background: rgba(234, 179, 8, 0.18); color: #ffd479; }
+
+.hazards-list
+{
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13.5px;
+    color: var(--dim);
+}
+
+.hazards-list li { margin-bottom: 4px; }
+.hazards-list code { font-family: var(--mono); font-size: 12px; color: var(--text); }
+.hazards-pct { font-family: var(--mono); font-size: 11px; color: var(--accent); }
 
 .structure-views
 {

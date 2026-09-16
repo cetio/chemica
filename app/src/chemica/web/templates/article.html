@@ -26,6 +26,7 @@
     <nav class="toc-rail">
       <div class="toc-title">Contents</div>
       <ol class="toc-list">
+        <li><a href="#panel-hazards">Hazards</a></li>
         {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
         {% if timelines %}<li><a href="#panel-effects">Effects timeline</a></li>{% endif %}
         {% for section, children in section_tree %}
@@ -40,6 +41,10 @@
           {% if paragraph.strip() %}<p class="lead">{{ paragraph }}</p>{% endif %}
         {% endfor %}
       {% endif %}
+
+      <div class="fragment-slot" id="panel-hazards" data-fragment="/compound/{{ name | urlencode }}/hazards">
+        <div class="fragment-loading">Loading hazards&#8230;</div>
+      </div>
 
       {% if dosages %}
       <section class="panel dosage-panel" id="panel-dosage">
@@ -114,7 +119,7 @@
         <div class="infobox-name">{{ compound.name }}</div>
         {% if compound.cid %}
           <div class="structure-views">
-            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
+            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}" data-name="{{ compound.name }}">Loading 3D&#8230;</div>
             <img class="structure-image"
                  src="/structure/{{ compound.cid }}.png"
                  alt="2D structure of {{ compound.name }}"
