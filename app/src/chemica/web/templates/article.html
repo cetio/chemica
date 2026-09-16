@@ -102,11 +102,17 @@
       <div class="infobox">
         <div class="infobox-name">{{ compound.name }}</div>
         {% if compound.cid %}
-          <img class="structure-image"
-               src="/structure/{{ compound.cid }}.png"
-               alt="2D structure of {{ compound.name }}"
-               loading="lazy">
-          <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
+          <div class="structure-views">
+            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
+            <img class="structure-image"
+                 src="/structure/{{ compound.cid }}.png"
+                 alt="2D structure of {{ compound.name }}"
+                 loading="lazy" hidden>
+            <div class="view-toggle">
+              <button type="button" class="active" data-view="3d">3D</button>
+              <button type="button" data-view="2d">2D</button>
+            </div>
+          </div>
         {% endif %}
         {% for group_name, rows in infobox %}
           <h3 class="infobox-group">{{ group_name }}</h3>
