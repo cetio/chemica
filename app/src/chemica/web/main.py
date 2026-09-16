@@ -57,9 +57,9 @@ app.mount("/static", StaticFiles(directory=str(TEMPLATES_DIR.parent / "static"))
 
 
 def _display(value: Any) -> str:
-    """Page text for a field: whole floats lose the trailing .0, None becomes --."""
+    """Page text for a field: whole floats lose the trailing .0, None becomes —."""
     if value is None:
-        return "--"
+        return "—"
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value)
