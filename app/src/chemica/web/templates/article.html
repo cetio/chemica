@@ -63,7 +63,7 @@
           <tbody>
             {% for dose in dosages %}
             <tr>
-              <td class="route-cell">{{ dose.route }}</td>
+              <td class="route-cell">{{ dose.route }}{% if dose.bioavailability %}<span class="route-bioavail">{{ dose.bioavailability }}</span>{% endif %}</td>
               <td>{{ dose.threshold }}</td>
               <td>{{ dose.light }}</td>
               <td>{{ dose.common }}</td>

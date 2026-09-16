@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import time
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -164,7 +165,10 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "article": article,
             "infobox": _infobox_groups(compound) if compound else [],
             "section_tree": _section_tree(article.sections[1:]) if article else [],
-            "dosages": page.dose_ladders,
+            "dosages": [
+                replace(d, bioavailability=_clean_field(d.bioavailability))
+                for d in page.dose_ladders
+            ],
             "timelines": [
                 {"route": e.route, "total": e.total, "segments": _segments(e)}
                 for e in page.effects
@@ -193,6 +197,12 @@ def cross_references_fragment(request: Request, name: str) -> Response:
 
 
 _STMT_RE = re.compile(r"^(H\d+)\s*(?:\(([\d.]+)%\))?:\s*(.*?)\s*(?:\[[^\]]*\])?\s*$")
+_CITE_RE = re.compile(r"\{\{[^{}]*\}\}|\{\{.*|<ref[^>]*/>|<ref[^>]*>.*?</ref>", re.S)
+
+
+def _clean_field(text: str | None) -> str | None:
+    """Drop citation markup a source left in a short display field."""
+    return _CITE_RE.sub("", text).strip() if text else text
 
 
 def _clean_statements(statements: list[str]) -> list[dict[str, Any]]:

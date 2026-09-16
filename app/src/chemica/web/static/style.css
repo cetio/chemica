@@ -480,6 +480,15 @@ details.section-expander details.section-expander summary
 .hazards-list code { font-family: var(--mono); font-size: 12px; color: var(--text); }
 .hazards-pct { font-family: var(--mono); font-size: 11px; color: var(--accent); }
 
+.route-bioavail
+{
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--dim);
+    margin-top: 2px;
+}
+
 .structure-views
 {
     position: relative;
