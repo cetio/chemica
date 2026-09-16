@@ -73,5 +73,6 @@ The legacy D/GTK desktop client remains under `source/` for reference; it is not
 
 ## License
 
-Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt). The vendored 3Dmol.js viewer is
-covered by its own license (`app/src/chemica/web/static/3Dmol-LICENSE.txt`).
+Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt). Third-party assets and their
+attribution are recorded in [NOTICE](NOTICE) — including the vendored 3Dmol.js viewer
+(BSD-3-Clause, `app/src/chemica/web/static/3Dmol-LICENSE.txt`) and the UNECE GHS pictograms.

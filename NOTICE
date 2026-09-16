@@ -1,0 +1,58 @@
+Chemica
+Copyright (c) the Chemica contributors.
+
+Chemica is licensed under AGPL-3.0-only (see LICENSE.txt). This file records
+attribution for third-party assets and data sources shipped with or used by
+the application.
+
+Vendored code
+=============
+
+3Dmol.js (app/src/chemica/web/static/3dmol-min.js)
+    Molecular visualization library, version 2.5.5.
+    Copyright (c) 2014, University of Pittsburgh and contributors.
+    BSD-3-Clause; incorporates code from GLmol (MIT/LGPL3 dual),
+    Three.js (MIT), and jQuery (MIT).
+    Full license text: app/src/chemica/web/static/3Dmol-LICENSE.txt
+    Upstream: https://github.com/3dmol/3Dmol.js
+
+    If you use 3Dmol.js in published work, the upstream authors ask for a
+    citation: Rego & Koes, "3Dmol.js: molecular visualization with WebGL",
+    Bioinformatics 31(8):1322-1324 (2015), doi:10.1093/bioinformatics/btu829.
+
+Bundled artwork
+===============
+
+GHS pictograms (app/src/chemica/web/static/ghs/*.svg)
+    The official hazard pictograms of the Globally Harmonized System of
+    Classification and Labelling of Chemicals, published by the United
+    Nations Economic Commission for Europe (UNECE). UNECE permits their
+    reproduction for the purpose of hazard communication; the pictogram
+    designs themselves are not subject to copyright restriction, though
+    the GHS framework text is (c) United Nations.
+    Reference: https://unece.org/transport/dangerous-goods/ghs-pictograms
+
+favicon.svg (app/src/chemica/web/static/favicon.svg)
+    Original artwork created for Chemica; licensed under AGPL-3.0-only
+    with the rest of the repository.
+
+Trademarks
+==========
+
+resources/icons/wikipedia.svg and resources/icons/psychonaut.svg reproduce
+the marks of Wikipedia (Wikimedia Foundation) and PsychonautWiki
+respectively. Those marks remain trademarks of their owners; their
+inclusion here is nominative — they identify the data sources the app
+queries — and implies no endorsement or affiliation.
+
+Data sources
+============
+
+Compound data is fetched at runtime from public APIs and is not
+redistributed with this repository:
+
+- PubChem (NIH/NLM) — structures, properties, identifiers, GHS data.
+- Wikipedia (Wikimedia Foundation) — article text under CC BY-SA 4.0.
+- PsychonautWiki — dosage, duration, and interaction data under CC BY-SA 4.0.
+- PubMed (NIH/NLM) — bibliographic records via NCBI Entrez, subject to the
+  NCBI Web-usage guidelines.
