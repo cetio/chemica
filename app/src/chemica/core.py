@@ -157,7 +157,7 @@ def fetch_article(name: str) -> Article | None:
 
 def fetch_compound_page(name: str) -> CompoundPage:
     """Compose the full page: compound, every sourced article, dose data."""
-    from chemica.crossrefs import find_cross_references, resolve_candidates
+    from chemica.crossrefs import extract_compound_mentions
     from chemica.sources.mediawiki import page_links as wiki_links
     from chemica.sources.mediawiki import section_links
     from chemica.sources.psychonaut import PsychonautWikiSource
@@ -169,21 +169,14 @@ def fetch_compound_page(name: str) -> CompoundPage:
     pw = PsychonautWikiSource()
     ladders, effects = pw.fetch_profile(name)
     articles = list(_article_sources(name))
-    compound = PubChemSource().fetch_compound(name)
+    source = PubChemSource()
+    compound = source.fetch_compound(name)
     references = PubMedSource().fetch_references(name)
-
-    def resolver(query: str) -> Compound | None:
-        if query.lower() == name.lower():
-            return None
-        try:
-            return fetch_compound(query)
-        except Exception:
-            return None
 
     article_text = "\n".join(
         section.text for article in articles for section in article.sections
     )
-    text_candidates = find_cross_references(article_text, resolver)
+    text_candidates = extract_compound_mentions(article_text)
 
     wiki_article = next(
         (a for a in articles if a.source == "wikipedia"), None
@@ -204,14 +197,24 @@ def fetch_compound_page(name: str) -> CompoundPage:
         # of the displayed article but kept as first-class candidates here.
         for title in section_links(WIKI_API, wiki_article.title, "see also"):
             link_candidates.add(title.split("(")[0].strip())
-    link_refs = resolve_candidates(link_candidates, resolver)
 
-    # Merge: link_refs first — real Wikipedia links outrank regex guesses
-    # on CID collision. by_cid keeps the first occurrence per compound.
+    # One batched resolution for every candidate: N name→CID lookups plus a
+    # single properties call, instead of N full fetch_compound round-trips.
+    resolved = source.fetch_many(list(link_candidates | text_candidates))
+
+    # Merge: link candidates first — real Wikipedia links outrank regex
+    # guesses on CID collision. by_cid keeps the first occurrence per
+    # compound. Self-references are filtered by resolved CID, not the raw
+    # query string, so aliases (Preludin → phenmetrazine) can't slip through.
     by_cid: dict[int, CrossReference] = {}
-    for ref in link_refs + text_candidates:
-        if ref.compound.cid is not None and ref.compound.cid not in by_cid:
-            by_cid[ref.compound.cid] = ref
+    for candidate in list(link_candidates) + list(text_candidates):
+        target = resolved.get(candidate)
+        if target is None or target.cid is None:
+            continue
+        if compound is not None and target.cid == compound.cid:
+            continue
+        if target.cid not in by_cid:
+            by_cid[target.cid] = CrossReference(candidate, target)
     cross_references = list(by_cid.values())[:12]
 
     return CompoundPage(

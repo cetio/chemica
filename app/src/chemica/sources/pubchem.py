@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import requests
@@ -26,6 +27,10 @@ PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 # PubChemSource objects per call — an instance cache would never see a repeat.
 # Names are stable, so entries never expire; the cache dies with the process.
 _CACHE: dict[str, Compound | None] = {}
+
+# Name → CID, shared by fetch_compound and fetch_many so a compound resolved
+# once never re-pays the lookup.
+_CID_CACHE: dict[str, int | None] = {}
 
 
 def _cas(synonyms: list[str]) -> str | None:
@@ -55,26 +60,75 @@ class PubChemSource:
     def fetch_article(self, query: str) -> Article | None:
         return None
 
+    def fetch_many(self, queries: list[str]) -> dict[str, Compound | None]:
+        """Resolve many names cheaply: parallel name→CID, then one batched
+        properties call. Skips synonyms — cross-ref cards only need the
+        formula — so results are lighter than fetch_compound's and never
+        enter _CACHE."""
+        ret: dict[str, Compound | None] = {}
+        pending = [
+            q
+            for q in dict.fromkeys(queries)
+            if q.strip().lower() not in _CACHE
+        ]
+        with ThreadPoolExecutor(max_workers=5) as pool:
+            futures = {pool.submit(self._name_to_cid, q): q for q in pending}
+            cid_for = {}
+            for future in as_completed(futures):
+                try:
+                    cid_for[futures[future]] = future.result()
+                except Exception:
+                    cid_for[futures[future]] = None
+        cids = {cid for cid in cid_for.values() if cid is not None}
+        props_by_cid = self._properties_batch(sorted(cids)) if cids else {}
+        for query in pending:
+            cid = cid_for.get(query)
+            ret[query] = (
+                self._shape(query, cid, props_by_cid.get(cid, {}), synonyms=[])
+                if cid is not None
+                else None
+            )
+        for query in queries:
+            key = query.strip().lower()
+            ret.setdefault(query, _CACHE.get(key))
+        return ret
+
     def _name_to_cid(self, name: str) -> int | None:
+        key = name.strip().lower()
+        if key in _CID_CACHE:
+            return _CID_CACHE[key]
         url = f"{PUG}/compound/name/{requests.utils.quote(name)}/cids/JSON"
         resp = requests.get(url, timeout=15)
         if resp.status_code != 200:
+            _CID_CACHE[key] = None
             return None
         body = resp.json()
         cids = body.get("IdentifierList", {}).get("CID", [])
-        return cids[0] if cids else None
+        _CID_CACHE[key] = cids[0] if cids else None
+        return _CID_CACHE[key]
 
-    def _properties(self, cid: int) -> dict[str, Any]:
+    def _properties_batch(self, cids: list[int]) -> dict[int, dict[str, Any]]:
+        """One call for many CIDs — PubChem accepts a comma-separated list."""
         props = "MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
-        url = f"{PUG}/compound/cid/{cid}/property/{props}/JSON"
+        url = f"{PUG}/compound/cid/{','.join(str(c) for c in cids)}/property/{props}/JSON"
         resp = requests.get(url, timeout=15)
         if resp.status_code != 200:
             return {}
         table = resp.json().get("PropertyTable", {}).get("Properties", [])
-        return table[0] if table else {}
+        return {row["CID"]: row for row in table if "CID" in row}
 
-    def _shape(self, query: str, cid: int, props: dict[str, Any]) -> Compound:
-        synonyms = self._synonyms(cid)
+    def _properties(self, cid: int) -> dict[str, Any]:
+        return self._properties_batch([cid]).get(cid, {})
+
+    def _shape(
+        self,
+        query: str,
+        cid: int,
+        props: dict[str, Any],
+        synonyms: list[str] | None = None,
+    ) -> Compound:
+        if synonyms is None:
+            synonyms = self._synonyms(cid)
         return Compound(
             # First letter only — .title() would mangle "DMT"/"5-HTP".
             name=query[:1].upper() + query[1:],

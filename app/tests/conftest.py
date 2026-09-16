@@ -45,6 +45,10 @@ def recording(monkeypatch):
     import requests
 
     def fake_get(url: str, *args: Any, **kwargs: Any) -> FixtureResponse:
+        if "/property/" in url and "pubchem" in url:
+            cid = _extract_path_segment(url, "/compound/cid/", "/property")
+            if "," in cid:
+                return _batched_properties(cid)
         path = _fixture_for_url(url)
         if path is None or not path.exists():
             return FixtureResponse(None, status=404)
@@ -52,6 +56,21 @@ def recording(monkeypatch):
 
     monkeypatch.setattr(requests, "get", fake_get)
     return fake_get
+
+
+def _batched_properties(cid_list: str) -> FixtureResponse:
+    """Merge per-CID property fixtures into one batched PropertyTable body."""
+    rows = []
+    for cid in cid_list.split(","):
+        path = FIXTURE_DIR / "pubchem" / f"properties_{cid}.json"
+        if not path.exists():
+            continue
+        rows.extend(
+            json.loads(path.read_text(encoding="utf-8"))
+            .get("PropertyTable", {})
+            .get("Properties", [])
+        )
+    return FixtureResponse(json.dumps({"PropertyTable": {"Properties": rows}}))
 
 
 def _fixture_for_url(url: str) -> Path | None:
