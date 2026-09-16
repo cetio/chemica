@@ -207,7 +207,10 @@ def test_fetch_compound_page_caffeine(recording):
     assert page.compound.formula == "C8H10N4O2"
 
     by_source = {a.source: a for a in page.articles}
-    assert set(by_source) == {"wikipedia", "psychonautwiki", "pubmed"}
+    # PubMed is no longer an article source — it contributes only via
+    # page.references. The PubMed Article was dead weight: never the main
+    # article (wikipedia/PW win) and only fed cross-ref noise.
+    assert set(by_source) == {"wikipedia", "psychonautwiki"}
     assert by_source["wikipedia"].title == "Caffeine"
     assert by_source["psychonautwiki"].sections
 

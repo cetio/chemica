@@ -71,6 +71,12 @@ def _fixture_for_url(url: str) -> Path | None:
             cid = _extract_path_segment(url, "/compound/cid/", "/synonyms")
             return FIXTURE_DIR / "pubchem" / f"synonyms_{cid}.json"
     if "en.wikipedia.org" in url:
+        if "action=parse" in url:
+            page = _safe_name(unquote(_extract_query_param(url, "page")))
+            if "prop=sections" in url:
+                return FIXTURE_DIR / "wikipedia" / f"parse_sections_{page}.json"
+            section = _extract_query_param(url, "section")
+            return FIXTURE_DIR / "wikipedia" / f"parse_links_{page}_{section}.json"
         if "/rest_v1/page/summary/" in url:
             title = url.split("/rest_v1/page/summary/", 1)[1]
             return FIXTURE_DIR / "wikipedia" / f"summary_{_safe_name(unquote(title))}.json"
