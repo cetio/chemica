@@ -55,7 +55,12 @@ def resolve_title(api: str, query: str) -> str | None:
     """Resolve a search term to a canonical page title, or None if missing."""
     key = (api, query.lower())
     if key not in _TITLES:
-        _TITLES[key] = _resolve_title(api, query)
+        # Misses are not memoized — a 404 is 'not yet', not 'never': rate
+        # limits and blips shouldn't pin a permanent decline for the process.
+        title = _resolve_title(api, query)
+        if title is not None:
+            _TITLES[key] = title
+        return title
     return _TITLES[key]
 
 
@@ -77,7 +82,10 @@ def extract_sections(api: str, title: str) -> list[Section]:
     """Fetch the full plain-text extract and split it into titled sections."""
     key = (api, title)
     if key not in _EXTRACTS:
-        _EXTRACTS[key] = _extract_sections(api, title)
+        sections = _extract_sections(api, title)
+        if sections:
+            _EXTRACTS[key] = sections
+        return sections
     return _EXTRACTS[key]
 
 
@@ -105,7 +113,10 @@ def page_links(api: str, title: str, limit: int = 50) -> list[str]:
     """Return the main-namespace page titles this article links to."""
     key = (api, title, limit)
     if key not in _LINKS:
-        _LINKS[key] = _page_links(api, title, limit)
+        links = _page_links(api, title, limit)
+        if links:
+            _LINKS[key] = links
+        return links
     return _LINKS[key]
 
 
@@ -136,7 +147,10 @@ def section_links(api: str, title: str, heading: str) -> list[str]:
     """
     key = (api, title, heading.lower())
     if key not in _SECTION_LINKS:
-        _SECTION_LINKS[key] = _section_links(api, title, heading)
+        links = _section_links(api, title, heading)
+        if links:
+            _SECTION_LINKS[key] = links
+        return links
     return _SECTION_LINKS[key]
 
 

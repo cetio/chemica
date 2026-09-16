@@ -159,12 +159,18 @@ class PsychonautWikiSource:
         if title is None:
             return None
         if title not in _PAGE_WT_CACHE:
-            _PAGE_WT_CACHE[title] = self._fetch_wikitext(title)
+            wikitext = self._fetch_wikitext(title)
+            if wikitext:
+                _PAGE_WT_CACHE[title] = wikitext
+            return wikitext
         return _PAGE_WT_CACHE[title]
 
     def _substancebox(self, title: str) -> str | None:
         if title not in _BOX_CACHE:
-            _BOX_CACHE[title] = self._fetch_wikitext(f"Template:SubstanceBox/{title}")
+            wikitext = self._fetch_wikitext(f"Template:SubstanceBox/{title}")
+            if wikitext:
+                _BOX_CACHE[title] = wikitext
+            return wikitext
         return _BOX_CACHE[title]
 
     def _fetch_wikitext(self, page: str) -> str | None:

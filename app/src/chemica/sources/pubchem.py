@@ -81,7 +81,11 @@ class PubChemSource:
     def fetch_compound(self, query: str) -> Compound | None:
         key = query.strip().lower()
         if key not in _CACHE:
-            _CACHE[key] = self._uncached(query)
+            # Misses are not memoized — see mediawiki.resolve_title.
+            compound = self._uncached(query)
+            if compound is not None:
+                _CACHE[key] = compound
+            return compound
         return _CACHE[key]
 
     def _uncached(self, query: str) -> Compound | None:
@@ -156,11 +160,12 @@ class PubChemSource:
         url = f"{PUG}/compound/name/{requests.utils.quote(name)}/cids/JSON"
         resp = cache.get(url, timeout=15)
         if resp.status_code != 200:
-            _CID_CACHE[key] = None
             return None
         body = resp.json()
         cids = body.get("IdentifierList", {}).get("CID", [])
-        _CID_CACHE[key] = cids[0] if cids else None
+        if not cids:
+            return None
+        _CID_CACHE[key] = cids[0]
         return _CID_CACHE[key]
 
     def _properties_batch(self, cids: list[int]) -> dict[int, dict[str, Any]]:
