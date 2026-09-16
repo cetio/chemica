@@ -254,6 +254,20 @@ def test_fetch_classes_ketamine(recording):
     assert classes.psychoactive == "dissociative"
 
 
+def test_fetch_subjective_ketamine(recording):
+    # Recorded PW wikitext annotates addiction potential, tolerance spans,
+    # and inline [[Effect::X]] tags through the article body.
+    from chemica.sources.psychonaut import PsychonautWikiSource
+
+    profile = PsychonautWikiSource().fetch_subjective("ketamine")
+    assert profile is not None
+    assert "abuse potential" in profile.addiction_potential
+    assert profile.tolerance_half == "14 days"
+    assert profile.tolerance_zero == "28 days"
+    assert "Sedation" in profile.effect_tags
+    assert len(profile.effect_tags) == len(set(profile.effect_tags))
+
+
 def test_fetch_drug_profile_ketamine(recording):
     # Recorded PUG-View 'Drug and Medication Information': regulatory fields
     # for a real drug record — ketamine is Approved + Prescription Only.

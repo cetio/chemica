@@ -17,6 +17,7 @@ pytest suite so CI never depends on network reachability.
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 
 import requests
 
@@ -28,6 +29,7 @@ from chemica.core import (
     DoseLadder,
     EffectsProfile,
     Interaction,
+    SubjectiveProfile,
 )
 from chemica.sources import mediawiki
 
@@ -68,6 +70,11 @@ _INTERACTIONS_SECTION_RE = re.compile(
 # [[Chemical class::arylcyclohexylamine]] / [[Psychoactive class::dissociative]]
 # — semantic annotations in the lead prose, same :: pattern as interactions.
 _CLASS_RE = re.compile(r"\[\[(Chemical|Psychoactive) class::([^\]]+)\]\]", re.IGNORECASE)
+# [[Addiction potential::…]], [[Time to X tolerance::…]], [[Effect::X]] —
+# same semantic-annotation family, safety/subjective rather than taxonomy.
+_EFFECT_RE = re.compile(r"\[\[(?:E|e)ffect::([^\]]+)\]\]")
+_ADDICTION_RE = re.compile(r"\[\[Addiction potential::([^\]]+)\]\]")
+_TOLERANCE_RE = re.compile(r"\[\[Time to (full|half|zero) tolerance::([^\]]+)\]\]")
 
 # SubstanceBox wikitext by page title — stable per session, process-lifetime.
 _BOX_CACHE: dict[str, str | None] = {}
@@ -128,6 +135,21 @@ class PsychonautWikiSource:
             chemical=fields.get("chemical"),
             psychoactive=fields.get("psychoactive"),
         )
+
+    def fetch_subjective(self, query: str) -> SubjectiveProfile | None:
+        """Addiction potential, tolerance timelines, and effect tags — the
+        same memoized page wikitext, one more regex family."""
+        wikitext = self._page_wikitext(query)
+        if not wikitext:
+            return None
+        profile = SubjectiveProfile(
+            addiction_potential=_first(_ADDICTION_RE, wikitext),
+            effect_tags=list(dict.fromkeys(m.group(1).strip() for m in _EFFECT_RE.finditer(wikitext))),
+        )
+        for span, value in _TOLERANCE_RE.findall(wikitext):
+            field_name = "tolerance_" + span.lower()
+            profile = replace(profile, **{field_name: value.strip()})
+        return profile if profile != SubjectiveProfile() else None
 
     def _page_wikitext(self, query: str) -> str | None:
         title = mediawiki.resolve_title(API, query)
@@ -202,6 +224,11 @@ def _effects_profiles(wikitext: str) -> list[EffectsProfile]:
             )
         )
     return profiles
+
+
+def _first(pattern: re.Pattern[str], text: str) -> str | None:
+    m = pattern.search(text)
+    return m.group(1).strip() if m else None
 
 
 def _interactions(wikitext: str) -> list[Interaction]:

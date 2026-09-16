@@ -135,6 +135,20 @@ class Classifications:
 
 
 @dataclass(frozen=True)
+class SubjectiveProfile:
+    """PW's safety/subjective annotations from the article wikitext —
+    addiction potential, tolerance timelines, and the inline [[Effect::X]]
+    tag list (deduplicated, source order)."""
+
+    addiction_potential: str | None = None
+    tolerance_full: str | None = None
+    tolerance_half: str | None = None
+    tolerance_zero: str | None = None
+    effect_tags: list[str] = field(default_factory=list)
+    source: str | None = "psychonautwiki"
+
+
+@dataclass(frozen=True)
 class DoseLadder:
     """One route's dose ladder (threshold → heavy), as printed by the source.
 
@@ -182,6 +196,7 @@ class CompoundPage:
     references: list[Reference] = field(default_factory=list)
     cross_references: list[CrossReference] = field(default_factory=list)
     classes: Classifications | None = None
+    subjective: SubjectiveProfile | None = None
 
 
 @runtime_checkable
@@ -240,6 +255,7 @@ def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> Compo
             "pw_article": pool.submit(_try, pw.fetch_article, name),
             "pw_profile": pool.submit(_try, pw.fetch_profile, name),
             "pw_classes": pool.submit(_try, pw.fetch_classes, name),
+            "pw_subjective": pool.submit(_try, pw.fetch_subjective, name),
         }
         if "references" not in defer:
             tasks["references"] = pool.submit(_try, PubMedSource().fetch_references, name)
@@ -257,6 +273,7 @@ def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> Compo
         dose_ladders=ladders,
         effects=effects,
         classes=results["pw_classes"],
+        subjective=results["pw_subjective"],
         references=results.get("references") or [],
         cross_references=cross_references,
     )
