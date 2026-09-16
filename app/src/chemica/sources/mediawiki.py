@@ -23,6 +23,14 @@ HEADERS = {"User-Agent": "chemica/0.1 (compound reference app; contact: cet)"}
 # Matches MediaWiki section markers: == Heading ==, === Subheading ===, etc.
 _SECTION_RE = re.compile(r"\n(={2,4})\s*(.+?)\s*\1\n")
 
+# Sections that are metadata, not article content — the same list the D app's
+# isExcludedHeading filtered. 'See also' additionally feeds the cross-ref
+# resolver (see section_links) before being dropped here.
+_EXCLUDED_HEADINGS = {
+    "references", "external links", "further reading", "see also", "notes",
+    "bibliography", "sources", "footnotes", "gallery", "navigation",
+}
+
 
 def resolve_title(api: str, query: str) -> str | None:
     """Resolve a search term to a canonical page title, or None if missing."""
@@ -79,11 +87,48 @@ def page_links(api: str, title: str, limit: int = 50) -> list[str]:
     return [link["title"] for link in links]
 
 
+def section_links(api: str, title: str, heading: str) -> list[str]:
+    """Main-namespace links inside a single named section.
+
+    Two-step via action=parse: prop=sections finds the section index, then
+    prop=links scoped to it. Lets the resolver use curated 'See also' links
+    even though the section is filtered out of the displayed article.
+    """
+    url = (
+        f"{api}?action=parse&page={requests.utils.quote(title)}"
+        f"&prop=sections&format=json&formatversion=2"
+    )
+    resp = requests.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return []
+    sections = resp.json().get("parse", {}).get("sections", [])
+    index = next(
+        (
+            s["index"]
+            for s in sections
+            if s.get("line", "").strip().lower() == heading.lower()
+        ),
+        None,
+    )
+    if index is None:
+        return []
+    url = (
+        f"{api}?action=parse&page={requests.utils.quote(title)}"
+        f"&prop=links&section={index}&format=json&formatversion=2"
+    )
+    resp = requests.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return []
+    links = resp.json().get("parse", {}).get("links", [])
+    return [link["title"] for link in links if link.get("ns") == 0]
+
+
 def parse_sections(extract: str, title: str) -> list[Section]:
     """Split a plain-text extract into titled sections at == markers.
 
     The lead text before the first section marker becomes a level-1 section
-    titled with the article name (matching the D app's behavior).
+    titled with the article name (matching the D app's behavior). Headings in
+    _EXCLUDED_HEADINGS and their subsections are dropped.
     """
     sections: list[Section] = []
     matches = list(_SECTION_RE.finditer(extract))
@@ -98,9 +143,17 @@ def parse_sections(extract: str, title: str) -> list[Section]:
     if lead:
         sections.append(Section(heading=title, level=1, text=lead))
 
+    skip_below = 0  # nesting level of an excluded heading, 0 = not skipping
     for i, match in enumerate(matches):
         level = len(match.group(1))  # == is level 2, === is level 3
         heading = match.group(2).strip()
+        if skip_below:
+            if level > skip_below:
+                continue
+            skip_below = 0
+        if heading.lower() in _EXCLUDED_HEADINGS:
+            skip_below = level
+            continue
         body_start = match.end()
         body_end = matches[i + 1].start() if i + 1 < len(matches) else len(extract)
         body = extract[body_start:body_end].strip()

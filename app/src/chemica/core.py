@@ -159,6 +159,7 @@ def fetch_compound_page(name: str) -> CompoundPage:
     """Compose the full page: compound, every sourced article, dose data."""
     from chemica.crossrefs import find_cross_references, resolve_candidates
     from chemica.sources.mediawiki import page_links as wiki_links
+    from chemica.sources.mediawiki import section_links
     from chemica.sources.psychonaut import PsychonautWikiSource
     from chemica.sources.pubchem import PubChemSource
     from chemica.sources.wikipedia import API as WIKI_API
@@ -199,6 +200,10 @@ def fetch_compound_page(name: str) -> CompoundPage:
                 link_candidates.add(clean)
             if len(link_candidates) >= 15:
                 break
+        # 'See also' is a human-curated related-compound list — filtered out
+        # of the displayed article but kept as first-class candidates here.
+        for title in section_links(WIKI_API, wiki_article.title, "see also"):
+            link_candidates.add(title.split("(")[0].strip())
     link_refs = resolve_candidates(link_candidates, resolver)
 
     # Merge: link_refs first — real Wikipedia links outrank regex guesses
@@ -225,7 +230,7 @@ def _article_sources(name: str):
     from chemica.sources.pubmed import PubMedSource
     from chemica.sources.wikipedia import WikipediaSource
 
-    for source in (WikipediaSource(), PsychonautWikiSource(), PubMedSource()):
+    for source in (WikipediaSource(), PsychonautWikiSource()):
         article = source.fetch_article(name)
         if article is not None:
             yield article

@@ -1,0 +1,18 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 15872156,
+        "MolecularFormula": "C9H12N4O3",
+        "MolecularWeight": "224.22",
+        "ConnectivitySMILES": "CN1C2=C(N=C(N(C2=O)C)OC)N(C1=O)C",
+        "InChI": "InChI=1S/C9H12N4O3/c1-11-5-6(12(2)9(11)15)10-8(16-4)13(3)7(5)14/h1-4H3",
+        "InChIKey": "ZVQXCXPGLSBNCX-UHFFFAOYSA-N",
+        "XLogP": -0.7,
+        "MonoisotopicMass": "224.09094026",
+        "TPSA": 65.5,
+        "Charge": 0
+      }
+    ]
+  }
+}
