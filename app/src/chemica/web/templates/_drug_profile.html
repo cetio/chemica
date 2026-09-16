@@ -1,34 +1,33 @@
-<section class="panel profile-panel" id="panel-drug-profile">
-  <h2 class="panel-heading">Drug profile <span class="source-tag source-pubchem">PubChem</span></h2>
-  {% if profile %}
-  <table class="profile-table">
-    {% if profile.max_phase %}
-    <tr><th>Status</th><td>{{ profile.max_phase }}</td></tr>
-    {% endif %}
-    {% if profile.availability %}
-    <tr><th>Availability</th><td>{{ profile.availability }} <span class="profile-scope">US</span></td></tr>
-    {% endif %}
-    {% if profile.first_approval %}
-    <tr><th>First approved</th><td>{{ profile.first_approval }}</td></tr>
-    {% endif %}
-    {% if profile.routes %}
-    <tr><th>Routes</th><td>{{ profile.routes | join("; ") }}</td></tr>
-    {% endif %}
-    {% if profile.drug_classes %}
-    <tr><th>Classes</th><td>{{ profile.drug_classes | join("; ") }}</td></tr>
-    {% endif %}
-  </table>
-  {% if profile.black_box %}
-  <p class="profile-warning">Black box warning — the FDA's strongest caution appears on this drug's label.</p>
+{% if profile %}
+<h3 class="infobox-group">Drug profile <span class="source-tag source-pubchem">PubChem</span></h3>
+<table class="infobox-table">
+  {% if profile.max_phase %}
+  <tr><th>Status</th><td>{{ profile.max_phase }}</td></tr>
   {% endif %}
-  {% if profile.half_life %}
+  {% if profile.availability %}
+  <tr><th>Availability</th><td>{{ profile.availability }} <span class="profile-scope">US</span></td></tr>
+  {% endif %}
+  {% if profile.first_approval %}
+  <tr><th>First approved</th><td>{{ profile.first_approval }}</td></tr>
+  {% endif %}
+  {% if profile.routes %}
+  <tr><th>Routes</th><td>{{ profile.routes | join("; ") }}</td></tr>
+  {% endif %}
+  {% if profile.drug_classes %}
+  <tr><th>Classes</th><td>{{ profile.drug_classes | join("; ") }}</td></tr>
+  {% endif %}
+</table>
+{% if profile.black_box %}
+<p class="profile-warning">Black box warning on the FDA label.</p>
+{% endif %}
+{% if profile.half_life %}
+<details class="halflife-detail">
+  <summary>Biological half-life</summary>
   <ul class="profile-halflife">
     {% for line in profile.half_life %}
     <li title="{{ line }}">{{ line }}</li>
     {% endfor %}
   </ul>
-  {% endif %}
-  {% else %}
-  <p class="fragment-decline">No drug profile on PubChem — not a recognized medication record.</p>
-  {% endif %}
-</section>
+</details>
+{% endif %}
+{% endif %}
