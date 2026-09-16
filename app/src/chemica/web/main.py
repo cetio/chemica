@@ -191,6 +191,26 @@ def cross_references_fragment(request: Request, name: str) -> Response:
     )
 
 
+@app.get("/sdf/{cid}")
+def structure_sdf(cid: int) -> Response:
+    """Proxy PubChem's 3D conformer SDF for the 3Dmol.js viewer."""
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/SDF?record_type=3d"
+    resp = None
+    for attempt in range(3):
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
+        if resp.status_code not in (429, 503):
+            break
+        if attempt < 2:
+            time.sleep(1.5 * (attempt + 1))
+    if resp is None or resp.status_code != 200:
+        return Response(status_code=503)
+    return Response(
+        content=resp.content,
+        media_type="chemical/x-mdl-sdfile",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/structure/{cid}.png")
 def structure_image(cid: int) -> Response:
     """Proxy PubChem's structure PNG so browser rate-limits don't blank it."""
