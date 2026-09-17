@@ -117,6 +117,9 @@ def _fixture_for_url(url: str) -> Path | None:
             cid = _extract_path_segment(url, "/compound/cid/", "/synonyms")
             return FIXTURE_DIR / "pubchem" / f"synonyms_{cid}.json"
     if "en.wikipedia.org" in url:
+        if "action=opensearch" in url:
+            term = _extract_query_param(url, "search")
+            return FIXTURE_DIR / "wikipedia" / f"opensearch_{_safe_name(unquote(term))}.json"
         if "action=parse" in url:
             page = _safe_name(unquote(_extract_query_param(url, "page")))
             if "prop=sections" in url:
@@ -142,6 +145,9 @@ def _fixture_for_url(url: str) -> Path | None:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "wikipedia" / f"query_{_safe_name(unquote(title))}.json"
     if "psychonautwiki.org" in url:
+        if "action=opensearch" in url:
+            term = _extract_query_param(url, "search")
+            return FIXTURE_DIR / "psychonaut" / f"opensearch_{_safe_name(unquote(term))}.json"
         if "action=parse" in url:
             # page=Template:SubstanceBox/{Title} for dose data; page={Title}
             # for the article wikitext (interactions).

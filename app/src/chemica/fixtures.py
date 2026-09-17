@@ -122,6 +122,7 @@ def _record_wikipedia(query: str) -> None:
         return
     page = next(iter(pages.values()))
     if "missing" in page:
+        _record_opensearch(query, wiki_dir, WIKI_API)
         return
     title = page.get("title", query)
 
@@ -156,6 +157,7 @@ def _record_psychonaut(query: str) -> None:
         return
     page = next(iter(pages.values()))
     if "missing" in page:
+        _record_opensearch(query, pw_dir, PW_API)
         return
     title = page.get("title", query)
 
@@ -205,6 +207,15 @@ def _record_pubmed(query: str) -> None:
     fetch_resp = requests.get(fetch_url, timeout=15, headers=HEADERS)
     if fetch_resp.status_code == 200:
         (pubmed_dir / f"efetch_{','.join(pmids)}.xml").write_text(fetch_resp.text, encoding="utf-8")
+
+
+def _record_opensearch(query: str, out_dir: Path, api: str) -> None:
+    """resolve_title's case-insensitive fallback — record the opensearch
+    response so decline paths replay it (usually an empty hits list)."""
+    url = f"{api}?action=opensearch&search={quote(query)}&limit=1&namespace=0&format=json"
+    resp = requests.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code == 200:
+        _write(out_dir / f"opensearch_{_safe(query)}.json", resp.json())
 
 
 def _write(path: Path, payload: object) -> None:

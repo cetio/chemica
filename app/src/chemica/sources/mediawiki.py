@@ -68,21 +68,45 @@ def resolve_title(api: str, query: str) -> str | None:
 
 
 def _resolve_title(api: str, query: str) -> str | None:
-    url = f"{api}?action=query&prop=pageprops&titles={requests.utils.quote(query)}&format=json&redirects=1"
-    resp = cache.get(url, timeout=15, headers=HEADERS)
-    if resp.status_code != 200:
-        return None
-    pages = resp.json().get("query", {}).get("pages", {})
-    if not pages:
-        return None
-    page = next(iter(pages.values()))
-    if "missing" in page:
+    page = _query_page(api, query)
+    if page is not None and "missing" in page:
+        # Redirect matching is case-sensitive after first-letter normalization
+        # ('MXiPr' exists; 'Mxipr' misses) — recover the real casing via
+        # opensearch, then re-resolve so redirects still land canonically.
+        casing = _opensearch_title(api, query)
+        if casing is None or casing.lower() != query.strip().lower():
+            # Only recover same-term casing — opensearch's fuzzy first hit
+            # would otherwise resolve 'zzzqqq' to Diphenhydramine.
+            return None
+        page = _query_page(api, casing)
+    if page is None or "missing" in page:
         return None
     # A disambiguation page is not a compound article — decline it rather
     # than serve 'James may refer to…' as a monograph.
     if "disambiguation" in page.get("pageprops", {}):
         return None
     return page.get("title")
+
+
+def _query_page(api: str, title: str) -> dict | None:
+    url = f"{api}?action=query&prop=pageprops&titles={requests.utils.quote(title)}&format=json&redirects=1"
+    resp = cache.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return None
+    pages = resp.json().get("query", {}).get("pages", {})
+    return next(iter(pages.values())) if pages else None
+
+
+def _opensearch_title(api: str, query: str) -> str | None:
+    url = f"{api}?action=opensearch&search={requests.utils.quote(query)}&limit=1&namespace=0&format=json"
+    resp = cache.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return None
+    try:
+        hits = resp.json()[1]
+    except (ValueError, IndexError):
+        return None
+    return hits[0] if hits else None
 
 
 def extract_sections(api: str, title: str) -> list[Section]:
