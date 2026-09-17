@@ -20,7 +20,7 @@
     {% if classes %}
       {% set classline = [classes.psychoactive, classes.chemical] | select | join(" · ") %}
       {% if classline %}
-      <div class="article-classes">{{ classline | capitalize }} <span class="source-tag source-pw">PW</span></div>
+      <div class="article-classes">{{ classline | capitalize }} <span class="source-tag source-pw">PsychonautWiki</span></div>
       {% endif %}
     {% endif %}
     {% if compound and compound.formula %}
@@ -192,7 +192,7 @@
           <p class="infobox-source">Resolved via {{ compound.salt_form }} (salt)</p>
         {% endif %}
         {% if article and article.url %}
-          <p class="infobox-source">Source: <a href="{{ article.url }}">Wikipedia</a></p>
+          <p class="infobox-source">Source: <a class="source-tag source-wp" href="{{ article.url }}">Wikipedia</a></p>
         {% endif %}
         <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/drug-profile"></div>
       </div>
