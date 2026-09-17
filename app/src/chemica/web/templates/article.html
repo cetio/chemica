@@ -20,14 +20,14 @@
     {% if classes %}
       {% set classline = [classes.psychoactive, classes.chemical] | select | join(" · ") %}
       {% if classline %}
-      <div class="article-classes">{{ classline | capitalize }} <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.svg" alt="">PW</span></div>
+      <div class="article-classes">{{ classline | capitalize }} <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.png" alt="PsychonautWiki"></span></div>
       {% endif %}
     {% endif %}
     {% if compound and compound.formula %}
       <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
     {% endif %}
     {% if article and article.url %}
-      <div class="article-source">Article <a class="source-tag source-wp" href="{{ article.url }}" title="Wikipedia"><img class="source-icon" src="/static/icons/wp.svg" alt="">WP</a></div>
+      <div class="article-source">Article <a class="source-tag source-wp" href="{{ article.url }}" title="Wikipedia"><img class="source-icon" src="/static/icons/wp.svg" alt="Wikipedia"></a></div>
     {% endif %}
   </header>
 
@@ -65,7 +65,7 @@
 
       {% if dosages %}
       <section class="panel dosage-panel" id="panel-dosage">
-        <h2 class="panel-heading">Dosage <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.svg" alt="">PW</span></h2>
+        <h2 class="panel-heading">Dosage <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.png" alt="PsychonautWiki"></span></h2>
         <table class="dosage-table">
           <thead>
             <tr>
@@ -95,7 +95,7 @@
 
       {% if timelines %}
       <section class="panel effects-panel" id="panel-effects">
-        <h2 class="panel-heading">Effects timeline <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.svg" alt="">PW</span></h2>
+        <h2 class="panel-heading">Effects timeline <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.png" alt="PsychonautWiki"></span></h2>
         <div class="gantt">
           {% for row in timelines %}
           <div class="gantt-row">
@@ -124,7 +124,7 @@
 
       {% if subjective %}
       <section class="panel subjective-panel" id="panel-subjective">
-        <h2 class="panel-heading">Subjective effects <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.svg" alt="">PW</span></h2>
+        <h2 class="panel-heading">Subjective effects <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.png" alt="PsychonautWiki"></span></h2>
         {% if subjective.addiction_potential or subjective.tolerance_half or subjective.tolerance_full or subjective.tolerance_zero %}
         <table class="profile-table">
           {% if subjective.addiction_potential %}

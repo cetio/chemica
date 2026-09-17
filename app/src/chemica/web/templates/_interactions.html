@@ -1,5 +1,5 @@
 <section class="panel interactions-panel" id="panel-interactions">
-  <h2 class="panel-heading">Dangerous interactions <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.svg" alt="">PW</span></h2>
+  <h2 class="panel-heading">Dangerous interactions <span class="source-tag source-pw" title="PsychonautWiki"><img class="source-icon" src="/static/icons/pw.png" alt="PsychonautWiki"></span></h2>
   {% if interactions %}
     {% for tier in ["dangerous", "unsafe", "uncertain"] %}
       {% set items = interactions | selectattr("severity", "equalto", tier) | list %}

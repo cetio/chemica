@@ -379,10 +379,9 @@ details.section-expander details.section-expander summary
 
 .source-icon
 {
-    width: 12px;
-    height: 12px;
-    vertical-align: -1.5px;
-    margin-right: 3px;
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
 }
 
 .article-classes
