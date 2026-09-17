@@ -263,10 +263,7 @@ details.section-expander
 {
     border-top: 1px solid var(--line);
     padding: 2px 0;
-    scroll-margin-top: 58px;
 }
-
-.panel, .fragment-slot { scroll-margin-top: 58px; }
 
 details.section-expander summary
 {
