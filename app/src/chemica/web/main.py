@@ -26,6 +26,7 @@ from chemica.core import (
     fetch_compound_page,
     fetch_cross_references,
     fetch_drug_profile,
+    fetch_figures,
     fetch_hazards,
     fetch_interactions,
     fetch_references,
