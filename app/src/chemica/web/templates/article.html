@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{{ title }} — Chemica{% endblock %}
 {% macro render_section(section, children, anchor="") %}
 <details class="section-expander"{% if anchor %} id="{{ anchor }}"{% endif %}>
   <summary class="section-heading">{{ section.heading }}</summary>
@@ -14,7 +15,7 @@
 {% endmacro %}
 {% block content %}
 <div class="article">
-  <nav class="article-nav">
+  <header class="article-nav">
     <a class="nav-link" href="/">&#8592; search</a>
     <h1 class="article-title">{{ title }}</h1>
     {% if classes %}
@@ -26,7 +27,7 @@
     {% if compound and compound.formula %}
       <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
     {% endif %}
-  </nav>
+  </header>
 
   <div class="article-columns">
     <nav class="toc-rail">
@@ -169,7 +170,7 @@
       <div class="infobox">
         {% if compound.cid %}
           <div class="structure-views">
-            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
+            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}" data-name="{{ compound.name }}">Loading 3D&#8230;</div>
             <img class="structure-image"
                  src="/structure/{{ compound.cid }}.png"
                  alt="2D structure of {{ compound.name }}"
