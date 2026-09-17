@@ -177,7 +177,12 @@ class PsychonautWikiSource:
 
     def _fetch_wikitext(self, page: str) -> str | None:
         url = f"{API}?action=parse&prop=wikitext&format=json&formatversion=2&page={requests.utils.quote(page)}"
-        resp = cache.get(url, timeout=15, headers=mediawiki.HEADERS)
+        resp = cache.get(
+            url,
+            timeout=15,
+            headers=mediawiki.HEADERS,
+            ok=lambda r: isinstance(r.json().get("parse", {}).get("wikitext"), str),
+        )
         if resp.status_code != 200:
             return None
         wikitext = resp.json().get("parse", {}).get("wikitext")

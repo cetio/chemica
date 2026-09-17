@@ -66,7 +66,12 @@ class PubMedSource:
             f"{EUTILS}/esearch.fcgi?db=pubmed&term={requests.utils.quote(term)}"
             f"&retmax={MAX_RESULTS}&retmode=json&{ID_PARAMS}"
         )
-        resp = cache.get(url, timeout=15, headers=HEADERS)
+        resp = cache.get(
+            url,
+            timeout=15,
+            headers=HEADERS,
+            ok=lambda r: bool(r.json().get("esearchresult", {}).get("idlist")),
+        )
         if resp.status_code != 200:
             return []
         return resp.json().get("esearchresult", {}).get("idlist", [])
