@@ -115,13 +115,14 @@ a:hover { text-decoration: underline; }
 
 .home, .not-found
 {
-    min-height: 100vh;
+    min-height: 60vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     gap: 12px;
-    text-align: center;
+    padding: 14vh 24px 0;
+    max-width: 720px;
 }
 
 .accent { color: var(--accent); }
