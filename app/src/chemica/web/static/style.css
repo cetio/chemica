@@ -204,6 +204,13 @@ button:hover { border-color: var(--accent); }
 
 .toc-list a:hover { color: var(--text); border-left-color: var(--accent); }
 
+.toc-list a.active
+{
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: var(--panel);
+}
+
 @media (max-width: 1180px) { .toc-rail { display: none; } }
 
 .article-main { flex: 1; min-width: 0; font-family: var(--serif); }
@@ -275,6 +282,9 @@ details.section-expander details.section-expander summary
     align-self: flex-start;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
+    /* Reserve the gutter so a scrollbar appearing (e.g. 2D view making the
+       rail taller) doesn't shift the layout. */
+    scrollbar-gutter: stable;
 }
 
 .infobox
@@ -319,14 +329,18 @@ details.section-expander details.section-expander summary
 .infobox-source { font-size: 12px; color: var(--dim); }
 .infobox-source a { color: var(--accent); text-decoration: none; }
 
+/* Skeletal PNGs are drawn with black bonds on transparency — they need a
+   light plate or they're invisible on the dark page. The border makes the
+   plate read as an intentional inset, not a white flash. */
 .structure-image
 {
     display: block;
     width: 100%;
     height: auto;
     margin: 0 auto 10px;
+    border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: #fff;
+    background: #fafafa;
 }
 
 .panel
@@ -424,9 +438,10 @@ details.section-expander details.section-expander summary
     top: 0;
     bottom: 0;
     min-width: 2px;
-    overflow: hidden;
 }
 
+/* Labels bleed past narrow segments rather than elipsizing into mush — the
+   dark halo keeps them legible over whatever segment they overlap. */
 .gantt-seg-label
 {
     display: block;
@@ -434,16 +449,17 @@ details.section-expander details.section-expander summary
     line-height: 24px;
     padding: 0 6px;
     white-space: nowrap;
-    color: rgba(230, 232, 236, 0.85);
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--text);
+    text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 4px var(--bg);
 }
 
-.phase-onset { background: rgba(94, 224, 160, 0.24); }
-.phase-comeup { background: rgba(94, 224, 160, 0.45); }
-.phase-peak { background: rgba(94, 224, 160, 0.92); }
-.phase-offset { background: rgba(94, 224, 160, 0.45); }
-.phase-aftereffects { background: rgba(94, 224, 160, 0.15); }
+/* Neutral slate ramp for the phases; mint is reserved for the peak and for
+   interactive elements — five shades of mint reads as arbitrary emphasis. */
+.phase-onset { background: rgba(152, 160, 173, 0.22); }
+.phase-comeup { background: rgba(152, 160, 173, 0.4); }
+.phase-peak { background: rgba(94, 224, 160, 0.9); }
+.phase-offset { background: rgba(152, 160, 173, 0.4); }
+.phase-aftereffects { background: rgba(152, 160, 173, 0.14); }
 
 .gantt-total { width: 90px; flex-shrink: 0; font-size: 12px; color: var(--dim); }
 
@@ -497,6 +513,11 @@ details.section-expander details.section-expander summary
     border-radius: var(--radius);
     padding: 10px;
 }
+
+/* The rail clips horizontally (overflow-y:auto forces it), so cards near
+   the right edge must anchor to the item's right side instead. toc.js flips
+   .flip on when the card would overflow the rail. */
+.xref-card.flip { left: auto; right: 0; }
 
 .cross-ref-item:hover .xref-card { display: block; }
 
@@ -671,7 +692,11 @@ details.section-expander details.section-expander summary
     list-style: none;
 }
 .effect-more summary::-webkit-details-marker { display: none; }
-.effect-more[open] summary { display: block; margin: 4px 0; }
+
+/* Open stays inline — the +N becomes a 'less' toggle instead of jumping the
+   list to a new line and leaving a dead +N behind. */
+.effect-more[open] summary { font-size: 0; }
+.effect-more[open] summary::after { content: "\2212"; font-size: 12.5px; }
 
 .route-bioavail
 {
@@ -825,6 +850,10 @@ details.section-expander details.section-expander summary
 /* Top navigation bar — c's markup: <nav class="topbar"><a class="topbar-brand">…
    plus .topbar-links / .topbar-search on the right. Full-bleed, hairline rule,
    sticky; the page centering lives below it, not above. */
+/* The bar is full-bleed but its contents align with the article column —
+   Wikipedia-style: the brand sits exactly over the page title. The article
+   column is centered at min(1560px, 96vw) + 24px padding, so the edge is
+   max((100vw-1560px)/2, 2vw) + 24px. */
 .topbar
 {
     position: sticky;
@@ -833,7 +862,7 @@ details.section-expander details.section-expander summary
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 0 24px;
+    padding: 0 max(calc(2vw + 24px), calc((100vw - 1560px) / 2 + 24px));
     height: 46px;
     background: var(--bg);
     border-bottom: 1px solid var(--line);
