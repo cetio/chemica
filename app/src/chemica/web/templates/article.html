@@ -15,8 +15,7 @@
 {% endmacro %}
 {% block content %}
 <div class="article">
-  <header class="article-nav">
-    <a class="nav-link" href="/">&#8592; search</a>
+  <header class="article-header">
     <h1 class="article-title">{{ title }}</h1>
     {% if classes %}
       {% set classline = [classes.psychoactive, classes.chemical] | select | join(" · ") %}
@@ -170,7 +169,7 @@
       <div class="infobox">
         {% if compound.cid %}
           <div class="structure-views">
-            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}" data-name="{{ compound.name }}">Loading 3D&#8230;</div>
+            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
             <img class="structure-image"
                  src="/structure/{{ compound.cid }}.png"
                  alt="2D structure of {{ compound.name }}"

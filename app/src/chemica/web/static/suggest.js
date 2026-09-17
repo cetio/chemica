@@ -2,11 +2,10 @@
 // Suggestions are accelerators only: free-text submit always wins, so
 // research-chem slang PubChem doesn't know still reaches the full resolver.
 document.addEventListener("DOMContentLoaded", () => {
-    const input = document.querySelector(".search input[name=q]");
-    if (!input) {
-        return;
-    }
+    document.querySelectorAll(".search input[name=q]").forEach(attach);
+});
 
+function attach(input) {
     const list = document.createElement("ul");
     list.className = "suggest-list";
     list.hidden = true;
@@ -94,4 +93,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     input.addEventListener("blur", close);
-});
+}
