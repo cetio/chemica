@@ -2,20 +2,24 @@
 
 Sources route requests through `get` instead of `requests.get` so a cold
 process doesn't re-pay the network for data that hasn't changed. Entries are
-keyed by URL, stored as JSON under ~/.cache/chemica/http/, and expire after
-_TTL_SECONDS. Set CHEMICA_NO_CACHE=1 to bypass entirely (the test suite does —
-recorded fixtures must stay authoritative over anything a live run cached).
+keyed by URL, stored as JSON under ~/.cache/chemica/http/ (binary bodies
+base64-encoded alongside their Content-Type), and expire after _TTL_SECONDS.
+Set CHEMICA_NO_CACHE=1 to bypass entirely (the test suite does — recorded
+fixtures must stay authoritative over anything a live run cached).
 
-Writes are atomic (tmp file + rename) so parallel fetches can't leave a
-half-written entry.
+Writes are atomic (tmp file + rename) and misses are single-flight — one
+upstream request per URL at a time — so parallel fetches can't leave a
+half-written entry or stampede a host.
 """
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -24,6 +28,9 @@ import requests
 _TTL_SECONDS = 24 * 60 * 60
 
 _CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "chemica" / "http"
+
+_locks: dict[str, threading.Lock] = {}
+_locks_guard = threading.Lock()
 
 
 def get(url: str, **kwargs) -> requests.Response:
@@ -34,10 +41,21 @@ def get(url: str, **kwargs) -> requests.Response:
     cached = _read(path)
     if cached is not None:
         return cached
-    resp = requests.get(url, **kwargs)
-    if resp.status_code == 200:
-        _write(path, resp)
-    return resp
+    with _locks_guard:
+        lock = _locks.setdefault(url, threading.Lock())
+    with lock:
+        try:
+            cached = _read(path)  # the caller ahead of us may have filled it
+            if cached is not None:
+                return cached
+            resp = requests.get(url, **kwargs)
+            if resp.status_code == 200:
+                _write(path, resp)
+            return resp
+        finally:
+            with _locks_guard:
+                if _locks.get(url) is lock:
+                    del _locks[url]
 
 
 def _entry_path(url: str) -> Path:
@@ -51,17 +69,31 @@ def _read(path: Path) -> requests.Response | None:
         return None
     if time.time() - entry.get("ts", 0) > _TTL_SECONDS:
         return None
-    resp = requests.Response()
-    resp.status_code = entry["status"]
-    resp._content = entry["body"].encode("utf-8")
-    resp.url = entry["url"]
-    resp.encoding = "utf-8"
-    return resp
+    ret = requests.Response()
+    ret.status_code = entry["status"]
+    if "body_b64" in entry:
+        ret._content = base64.b64decode(entry["body_b64"])
+    else:
+        ret._content = entry["body"].encode("utf-8")
+    ret.url = entry["url"]
+    ret.encoding = "utf-8"
+    if entry.get("content_type"):
+        ret.headers["Content-Type"] = entry["content_type"]
+    return ret
 
 
 def _write(path: Path, resp: requests.Response) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"url": resp.url, "status": resp.status_code, "body": resp.text, "ts": time.time()}
+    payload = {
+        "url": resp.url,
+        "status": resp.status_code,
+        "content_type": resp.headers.get("Content-Type"),
+        "ts": time.time(),
+    }
+    try:
+        payload["body"] = resp.content.decode("utf-8")
+    except UnicodeDecodeError:
+        payload["body_b64"] = base64.b64encode(resp.content).decode("ascii")
     try:
         fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
         with os.fdopen(fd, "w", encoding="utf-8") as f:

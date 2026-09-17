@@ -276,25 +276,43 @@ def hazards_fragment(request: Request, name: str) -> HTMLResponse:
     )
 
 
+_PROXY_HEADERS = {"User-Agent": "chemica/0.1"}
+
+
+def _upstream(url: str) -> requests.Response:
+    """Fetch an upstream asset through the disk cache, retrying 429/503.
+
+    The file proxies share this so a warm cache never re-pays the host and a
+    transient rate-limit gets the same three-try backoff everywhere.
+    """
+    resp = cache.get(url, timeout=15, headers=_PROXY_HEADERS)
+    for attempt in (1, 2):
+        if resp.status_code not in (429, 503):
+            break
+        time.sleep(1.5 * attempt)
+        resp = cache.get(url, timeout=15, headers=_PROXY_HEADERS)
+    return resp
+
+
+def _proxied(resp: requests.Response, media_type: str) -> Response:
+    """Serve a fetched asset — an upstream 404 is a missing file, not downtime."""
+    if resp.status_code == 404:
+        return Response(status_code=404)
+    if resp.status_code != 200:
+        return Response(status_code=503)
+    return Response(
+        content=resp.content,
+        media_type=media_type,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/sdf/{cid}")
 def structure_sdf(cid: int, flat: bool = False) -> Response:
     """Proxy PubChem's 3D conformer SDF for the 3Dmol.js viewer."""
     record_type = "2d" if flat else "3d"
     url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/SDF?record_type={record_type}"
-    resp = None
-    for attempt in range(3):
-        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
-        if resp.status_code not in (429, 503):
-            break
-        if attempt < 2:
-            time.sleep(1.5 * (attempt + 1))
-    if resp is None or resp.status_code != 200:
-        return Response(status_code=503)
-    return Response(
-        content=resp.content,
-        media_type="chemical/x-mdl-sdfile",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    return _proxied(_upstream(url), "chemical/x-mdl-sdfile")
 
 
 @app.get("/image/{filename}")
@@ -305,37 +323,12 @@ def article_image(filename: str, width: int = 400) -> Response:
         return Response(status_code=400)
     width = min(max(width, 64), 1200)
     url = f"https://en.wikipedia.org/wiki/Special:FilePath/{requests.utils.quote(filename)}?width={width}"
-    resp = None
-    for attempt in range(3):
-        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
-        if resp.status_code not in (429, 503):
-            break
-        if attempt < 2:
-            time.sleep(1.5 * (attempt + 1))
-    if resp is None or resp.status_code != 200:
-        return Response(status_code=503)
-    return Response(
-        content=resp.content,
-        media_type=resp.headers.get("Content-Type", "image/*"),
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    resp = _upstream(url)
+    return _proxied(resp, resp.headers.get("Content-Type", "image/*"))
 
 
 @app.get("/structure/{cid}.png")
 def structure_image(cid: int) -> Response:
     """Proxy PubChem's structure PNG so browser rate-limits don't blank it."""
     url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/PNG"
-    resp = None
-    for attempt in range(3):
-        resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
-        if resp.status_code not in (429, 503):
-            break
-        if attempt < 2:
-            time.sleep(1.5 * (attempt + 1))
-    if resp is None or resp.status_code != 200:
-        return Response(status_code=503)
-    return Response(
-        content=resp.content,
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    return _proxied(_upstream(url), "image/png")
