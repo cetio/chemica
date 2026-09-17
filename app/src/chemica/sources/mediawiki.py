@@ -33,6 +33,9 @@ _EXCLUDED_HEADINGS = {
     "further reading",
     "see also",
     "notes",
+    "reference notes",
+    "notes and references",
+    "notes and citations",
     "bibliography",
     "sources",
     "footnotes",
@@ -144,6 +147,9 @@ def page_figures(api: str, title: str) -> list[dict[str, str]]:
     The REST media list marks navbox/template chrome showInGallery=false, and
     real article figures carry a caption while structure depictions usually
     don't — filtering on both keeps figures and drops infobox duplicates.
+    A second pass over the mobile-html payload maps each image to the section
+    heading it illustrates so the frontend can float figures beside their
+    prose instead of stripping them.
     """
     base = api.split("/w/")[0]
     url = f"{base}/api/rest_v1/page/media-list/{requests.utils.quote(title)}"
@@ -157,6 +163,35 @@ def page_figures(api: str, title: str) -> list[dict[str, str]]:
             continue
         caption = re.sub(r"\[\d+\]", "", caption).strip()
         ret.append({"file": item["title"].removeprefix("File:"), "caption": caption})
+    if not ret:
+        return []
+    sections = _figure_sections(base, title)
+    for fig in ret:
+        fig["section"] = sections.get(fig["file"], "")
+    return ret
+
+
+_MOBILE_MARK_RE = re.compile(r'<h[1-4][^>]*\bid="([^"]+)"|resource="\./File:([^"]+)"')
+
+
+def _figure_sections(base: str, title: str) -> dict[str, str]:
+    """Map each embedded File: image to the heading of its containing section.
+
+    mobile-html emits sections in document order with h1-h4 titles and img tags
+    carrying resource="./File:Name.ext"; walking the markup linearly while
+    remembering the last heading attributes each file to its section.
+    """
+    url = f"{base}/api/rest_v1/page/mobile-html/{requests.utils.quote(title)}"
+    resp = cache.get(url, timeout=15, headers=HEADERS)
+    if resp.status_code != 200:
+        return {}
+    ret: dict[str, str] = {}
+    heading = ""
+    for match in _MOBILE_MARK_RE.finditer(resp.text):
+        if match.group(1) is not None:
+            heading = match.group(1).replace("_", " ")
+        elif match.group(2) not in ret:
+            ret[match.group(2)] = heading
     return ret
 
 

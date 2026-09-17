@@ -15,6 +15,7 @@ without touching the front-ends.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
@@ -344,18 +345,25 @@ def fetch_hazards(name: str) -> HazardProfile | None:
     return _try(source.fetch_hazards, compound.cid)
 
 
-def fetch_figures(name: str) -> list[dict[str, str]]:
+_SPECIMEN_RE = re.compile(r"\b(vial|powder|crystal|sample|tablet|bottle|blister|package|patch)\b", re.I)
+
+
+def fetch_figures(name: str) -> dict:
     """Captioned figures from the resolved Wikipedia article — for the
     deferred figure strip. page_figures filters to gallery-flagged media
     with captions, which drops navbox chrome and infobox-duplicating
-    structure depictions."""
+    structure depictions. The frontispiece is the first figure whose caption
+    describes a real-world specimen (vial, powder, crystals...) rather than a
+    diagram or table — what the substance looks like, not what it is."""
     from chemica.sources import mediawiki
     from chemica.sources.wikipedia import API, WikipediaSource
 
     article = _try(WikipediaSource().fetch_article, name)
     if article is None:
-        return []
-    return mediawiki.page_figures(API, article.title)
+        return {"figures": [], "frontispiece": None}
+    figures = mediawiki.page_figures(API, article.title)
+    specimen = next((f for f in figures if _SPECIMEN_RE.search(f["caption"])), None)
+    return {"figures": figures, "frontispiece": specimen["file"] if specimen else None}
 
 
 def _resolve_cross_references(name: str, articles: list[Article], compound: Compound | None) -> list[CrossReference]:

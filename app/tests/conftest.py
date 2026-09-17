@@ -113,6 +113,9 @@ def _fixture_for_url(url: str) -> Path | None:
         if "/rest_v1/page/media-list/" in url:
             title = url.split("/rest_v1/page/media-list/", 1)[1]
             return FIXTURE_DIR / "wikipedia" / f"medialist_{_safe_name(unquote(title))}.json"
+        if "/rest_v1/page/mobile-html/" in url:
+            title = url.split("/rest_v1/page/mobile-html/", 1)[1]
+            return FIXTURE_DIR / "wikipedia" / f"mobilehtml_{_safe_name(unquote(title))}.html"
         if "prop=extracts" in url:
             title = _extract_query_param(url, "titles")
             return FIXTURE_DIR / "wikipedia" / f"extracts_{_safe_name(unquote(title))}.json"

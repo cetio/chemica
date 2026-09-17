@@ -289,7 +289,8 @@ def test_fetch_figures_ketamine(recording):
     # captionless structure depictions duplicate the infobox and stay out.
     from chemica.core import fetch_figures
 
-    figures = fetch_figures("ketamine")
+    result = fetch_figures("ketamine")
+    figures = result["figures"]
     files = [fig["file"] for fig in figures]
     assert "Ketamine_metabolites2.png" in files
     assert "S-ketamine-2D-skeletal.png" not in files

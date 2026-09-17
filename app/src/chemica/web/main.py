@@ -253,7 +253,10 @@ def drug_profile_fragment(request: Request, name: str) -> HTMLResponse:
 @app.get("/compound/{name}/figures", response_class=HTMLResponse)
 def figures_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred Wikipedia figure strip — empty when the article has none."""
-    return templates.TemplateResponse(request, "_figures.html", {"figures": fetch_figures(name)})
+    result = fetch_figures(name)
+    return templates.TemplateResponse(
+        request, "_figures.html", {"figures": result["figures"], "frontispiece": result["frontispiece"]}
+    )
 
 
 @app.get("/compound/{name}/hazards", response_class=HTMLResponse)
