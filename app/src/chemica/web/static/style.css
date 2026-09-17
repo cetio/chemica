@@ -327,10 +327,6 @@ details.section-expander details.section-expander summary
 }
 
 .infobox-source { font-size: 12px; color: var(--dim); }
-.infobox-source a { text-decoration: none; }
-.infobox-source a:hover { text-decoration: underline; }
-.infobox-source .source-tag { margin-left: 2px; }
-.infobox-source .source-tag::before { content: none; }
 
 /* Skeletal PNGs are drawn with black bonds on transparency — they need a
    light plate or they're invisible on the dark page. The border makes the
