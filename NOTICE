@@ -36,14 +36,15 @@ favicon.svg (app/src/chemica/web/static/favicon.svg)
     Original artwork created for Chemica; licensed under AGPL-3.0-only
     with the rest of the repository.
 
-Trademarks
-==========
+Fonts
+=====
 
-resources/icons/wikipedia.svg and resources/icons/psychonaut.svg reproduce
-the marks of Wikipedia (Wikimedia Foundation) and PsychonautWiki
-respectively. Those marks remain trademarks of their owners; their
-inclusion here is nominative — they identify the data sources the app
-queries — and implies no endorsement or affiliation.
+IBM Plex Sans / Serif / Mono (app/src/chemica/web/static/fonts/)
+    Typeface family designed by Mike Abbink and Bold Monday for IBM,
+    release @ibm/plex-*@1.1.0, distributed as WOFF2.
+    Copyright (c) IBM; licensed under the SIL Open Font License 1.1.
+    Full license text: app/src/chemica/web/static/fonts/IBMPlex-LICENSE.txt
+    Upstream: https://github.com/IBM/plex
 
 Data sources
 ============
