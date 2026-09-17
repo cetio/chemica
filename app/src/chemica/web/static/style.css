@@ -855,6 +855,7 @@ details.section-expander details.section-expander summary
     object-fit: cover;
     opacity: 0.92;
     transition: opacity 0.15s;
+    background: #fafafa;
 }
 
 .figure:hover img { opacity: 1; }
