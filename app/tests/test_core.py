@@ -253,6 +253,16 @@ def test_fetch_classes_ketamine(recording):
     assert classes.psychoactive == "dissociative"
 
 
+def test_wikipedia_declines_disambiguation_page(recording):
+    # 'james' resolves to a disambiguation page, not a compound article —
+    # pageprops flags it and the source must decline rather than render
+    # 'James may refer to…' as a monograph.
+    from chemica.sources.mediawiki import resolve_title
+    from chemica.sources.wikipedia import API
+
+    assert resolve_title(API, "james") is None
+
+
 def test_fetch_interactions_psilocybin(recording):
     # Psilocybin's recorded wikitext nests the interaction annotation inside
     # [[]] ('[[[[UncertainInteraction::Cannabis|Cannabis]]]]') and separates

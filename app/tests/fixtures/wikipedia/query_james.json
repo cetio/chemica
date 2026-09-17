@@ -1,0 +1,25 @@
+{
+    "batchcomplete": "",
+    "query": {
+        "normalized": [
+            {
+                "from": "james",
+                "to": "James"
+            }
+        ],
+        "pages": {
+            "78957": {
+                "pageid": 78957,
+                "ns": 0,
+                "title": "James",
+                "pageprops": {
+                    "disambiguation": "",
+                    "expectshortpage": "",
+                    "toc": "",
+                    "wikibase-shortdesc": "Topics referred to by the same term",
+                    "wikibase_item": "Q224016"
+                }
+            }
+        }
+    }
+}

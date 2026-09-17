@@ -68,7 +68,7 @@ def resolve_title(api: str, query: str) -> str | None:
 
 
 def _resolve_title(api: str, query: str) -> str | None:
-    url = f"{api}?action=query&titles={requests.utils.quote(query)}&format=json&redirects=1"
+    url = f"{api}?action=query&prop=pageprops&titles={requests.utils.quote(query)}&format=json&redirects=1"
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return None
@@ -77,6 +77,10 @@ def _resolve_title(api: str, query: str) -> str | None:
         return None
     page = next(iter(pages.values()))
     if "missing" in page:
+        return None
+    # A disambiguation page is not a compound article — decline it rather
+    # than serve 'James may refer to…' as a monograph.
+    if "disambiguation" in page.get("pageprops", {}):
         return None
     return page.get("title")
 
