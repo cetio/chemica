@@ -102,6 +102,12 @@ def _record_wikipedia(query: str) -> None:
     if extracts_resp.status_code == 200:
         _write(wiki_dir / f"extracts_{_safe(title)}.json", extracts_resp.json())
 
+    # media-list endpoint — keyed by resolved title (gallery-flagged figures)
+    medialist_url = f"https://en.wikipedia.org/api/rest_v1/page/media-list/{quote(title)}"
+    medialist_resp = requests.get(medialist_url, timeout=15, headers=HEADERS)
+    if medialist_resp.status_code == 200:
+        _write(wiki_dir / f"medialist_{_safe(title)}.json", medialist_resp.json())
+
 
 def _record_psychonaut(query: str) -> None:
     pw_dir = FIXTURE_DIR / "psychonaut"
