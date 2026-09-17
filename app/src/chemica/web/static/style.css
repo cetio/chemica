@@ -217,7 +217,7 @@ button:hover { border-color: var(--accent); }
 {
     width: 12px;
     height: 12px;
-    margin-right: 6px;
+    margin-left: 6px;
     vertical-align: -1.5px;
     opacity: 0.8;
 }
@@ -235,7 +235,7 @@ button:hover { border-color: var(--accent); }
 .toc-tail-fold summary::before { content: "+ "; color: var(--dim); }
 .toc-tail-fold[open] summary::before { content: "– "; }
 .toc-tail-fold ol { list-style: none; margin: 0; padding: 0; }
-.toc-tail-fold .toc-src { width: 10px; height: 10px; margin-right: 5px; }
+.toc-tail-fold .toc-src { width: 10px; height: 10px; margin-left: 5px; }
 .toc-tail-fold a { font-size: 12px; padding-left: 18px; }
 
 @media (max-width: 1180px) { .toc-rail { display: none; } }
@@ -401,8 +401,6 @@ details.section-expander details.section-expander summary
     margin-left: 8px;
     opacity: 0.9;
 }
-
-.source-tag::before { content: "· "; color: var(--line); }
 
 .source-icon
 {
