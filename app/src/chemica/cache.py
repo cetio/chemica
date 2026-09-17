@@ -21,6 +21,7 @@ import os
 import tempfile
 import threading
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import requests
@@ -33,23 +34,29 @@ _locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
 
 
-def get(url: str, **kwargs) -> requests.Response:
-    """Drop-in requests.get with a disk cache for 200 responses."""
+def get(url: str, ok: Callable[[requests.Response], bool] | None = None, **kwargs) -> requests.Response:
+    """Drop-in requests.get with a disk cache for 200 responses.
+
+    `ok` lets a caller declare that an HTTP-200 body is still a miss — e.g.
+    MediaWiki returns a 'missing' page at 200. Failing `ok` skips the write,
+    and a cached entry that fails it is treated as absent and refetched, so
+    semantic negatives recorded before a rule existed heal on next read
+    instead of pinning a decline until TTL."""
     if os.environ.get("CHEMICA_NO_CACHE"):
         return requests.get(url, **kwargs)
     path = _entry_path(url)
     cached = _read(path)
-    if cached is not None:
+    if cached is not None and (ok is None or ok(cached)):
         return cached
     with _locks_guard:
         lock = _locks.setdefault(url, threading.Lock())
     with lock:
         try:
             cached = _read(path)  # the caller ahead of us may have filled it
-            if cached is not None:
+            if cached is not None and (ok is None or ok(cached)):
                 return cached
             resp = requests.get(url, **kwargs)
-            if resp.status_code == 200:
+            if resp.status_code == 200 and (ok is None or ok(resp)):
                 _write(path, resp)
             return resp
         finally:
