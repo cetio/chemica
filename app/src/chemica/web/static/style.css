@@ -694,3 +694,30 @@ details.section-expander details.section-expander summary
     opacity: 0.4;
     cursor: default;
 }
+
+.search { position: relative; }
+
+.suggest-list
+{
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: min(520px, 70vw);
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    background: var(--panel-2);
+    border: 1px solid #2a2f38;
+    border-radius: 8px;
+    z-index: 30;
+}
+
+.suggest-list li
+{
+    padding: 7px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.suggest-list li.active { background: var(--line); }

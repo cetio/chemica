@@ -7,6 +7,7 @@ pluggable and whose seam the desktop app reuses.
 
 from __future__ import annotations
 
+import json
 import re
 import time
 from dataclasses import replace
@@ -19,6 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from chemica import cache
 from chemica.core import (
     Compound,
     fetch_compound_page,
@@ -133,6 +135,25 @@ def submit(request: Request, q: str = "") -> HTMLResponse:
     return RedirectResponse(f"/compound/{name}", status_code=303)
 
 
+@app.get("/suggest")
+def suggest(q: str = "") -> Response:
+    """PubChem name autocomplete for the search box. Pure proxy — suggestions
+    are accelerators; free-text submit still goes through the full resolver."""
+    query = q.strip()
+    if len(query) < 2:
+        return Response(content="[]", media_type="application/json")
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/{requests.utils.quote(query)}/JSON?limit=8"
+    resp = cache.get(url, timeout=10)
+    if resp.status_code != 200:
+        return Response(content="[]", media_type="application/json")
+    terms = resp.json().get("dictionary_terms", {}).get("compound", [])
+    return Response(
+        content=json.dumps(terms),
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
 @app.get("/compound/{name}", response_class=HTMLResponse)
 def compound_page(request: Request, name: str) -> HTMLResponse:
     page = fetch_compound_page(name, defer={"references", "cross_references"})
@@ -215,6 +236,12 @@ def interactions_fragment(request: Request, name: str) -> HTMLResponse:
 def drug_profile_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred PubChem drug-profile card — data or decline."""
     return templates.TemplateResponse(request, "_drug_profile.html", {"profile": fetch_drug_profile(name)})
+
+
+@app.get("/compound/{name}/figures", response_class=HTMLResponse)
+def figures_fragment(request: Request, name: str) -> HTMLResponse:
+    """Deferred Wikipedia figure strip — empty when the article has none."""
+    return templates.TemplateResponse(request, "_figures.html", {"figures": fetch_figures(name)})
 
 
 @app.get("/compound/{name}/hazards", response_class=HTMLResponse)

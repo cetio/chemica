@@ -4,8 +4,9 @@
   <h1 class="home-logo">Chem<span class="accent">ica</span></h1>
   <p class="tagline">The compound reference — a name becomes a sourced article.</p>
   <form class="search" action="/search" method="get">
-    <input type="search" name="q" placeholder="Search for a compound..." autofocus>
+    <input type="search" name="q" placeholder="Search for a compound..." autofocus autocomplete="off">
     <button type="submit">search</button>
   </form>
+  <script src="/static/suggest.js" defer></script>
 </main>
 {% endblock %}
