@@ -6,8 +6,7 @@
       <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
       {% if xref.compound and xref.compound.cid %}
       <div class="xref-card">
-        <img src="/structure/{{ xref.compound.cid }}.png" alt="" loading="lazy">
-        <div class="xref-card-name">{{ xref.name }}</div>
+        <img src="/structure/{{ xref.compound.cid }}.png" alt="{{ xref.name }}" loading="lazy">
         {% if xref.compound.formula %}
         <div class="xref-card-formula">{{ xref.compound.formula | subscript | safe }}</div>
         {% endif %}
