@@ -139,13 +139,20 @@ def _page_links(api: str, title: str, limit: int) -> list[str]:
 
 
 def page_images(api: str, title: str) -> list[str]:
-    """Image filenames used by the article — UI chrome (icons, logos) stays
-    in the list; the caller filters by name or renders what survives."""
-    url = f"{api}?action=parse&page={requests.utils.quote(title)}&prop=images&format=json&formatversion=2"
+    """Figure filenames the article puts in galleries — the REST media list
+    marks navbox/template chrome showInGallery=false, so filtering on it keeps
+    real article figures (including SVG skeletals) without a name denylist."""
+    base = api.split("/w/")[0]
+    url = f"{base}/api/rest_v1/page/media-list/{requests.utils.quote(title)}"
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
-    return [img for img in resp.json().get("parse", {}).get("images", [])]
+    items = resp.json().get("items", [])
+    return [
+        item["title"].removeprefix("File:")
+        for item in items
+        if item.get("type") == "image" and item.get("showInGallery")
+    ]
 
 
 def section_links(api: str, title: str, heading: str) -> list[str]:
