@@ -195,7 +195,8 @@ button:hover { border-color: var(--accent); }
 .toc-list a
 {
     display: block;
-    padding: 4px 10px;
+    position: relative;
+    padding: 4px 26px 4px 10px;
     font-size: 13px;
     color: var(--dim);
     text-decoration: none;
@@ -214,14 +215,18 @@ button:hover { border-color: var(--accent); }
     background: var(--panel);
 }
 
-/* Per-entry source marks: the icon column itself is the dossier/article
-   split — PC/PW/PM on top, a violet-W run marking the Wikipedia prose. */
+/* Per-entry source marks pinned to a right-edge column — literalizing the
+   dossier/article split. Absolute so a long name truncates with an ellipsis
+   instead of pushing the mark off the line. */
 .toc-src
 {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 12px;
     height: 12px;
-    margin-left: 6px;
-    vertical-align: -1.5px;
+    margin: 0;
     opacity: 0.8;
 }
 
@@ -238,7 +243,7 @@ button:hover { border-color: var(--accent); }
 .toc-tail-fold summary::before { content: "+ "; color: var(--dim); }
 .toc-tail-fold[open] summary::before { content: "– "; }
 .toc-tail-fold ol { list-style: none; margin: 0; padding: 0; }
-.toc-tail-fold .toc-src { width: 10px; height: 10px; margin-left: 5px; }
+.toc-tail-fold .toc-src { width: 10px; height: 10px; }
 .toc-tail-fold a { font-size: 12px; padding-left: 18px; }
 
 @media (max-width: 1180px) { .toc-rail { display: none; } }
