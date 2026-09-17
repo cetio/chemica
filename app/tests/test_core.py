@@ -285,14 +285,16 @@ def test_fetch_drug_profile_ketamine(recording):
 
 
 def test_fetch_figures_ketamine(recording):
-    # REST media-list: showInGallery keeps real article figures (incl. SVG
-    # skeletals) while navbox/template chrome stays out of the strip.
+    # REST media-list: showInGallery + caption keep real article figures;
+    # captionless structure depictions duplicate the infobox and stay out.
     from chemica.core import fetch_figures
 
     figures = fetch_figures("ketamine")
-    assert "S-ketamine-2D-skeletal.png" in figures
-    assert "Ketamine_metabolites2.png" in figures
-    assert all("OOjs" not in f and "Yes_check" not in f for f in figures)
+    files = [fig["file"] for fig in figures]
+    assert "Ketamine_metabolites2.png" in files
+    assert "S-ketamine-2D-skeletal.png" not in files
+    assert all(fig["caption"] for fig in figures)
+    assert all("OOjs" not in f and "Yes_check" not in f for f in files)
 
 
 def test_fetch_hazards_caffeine(recording):

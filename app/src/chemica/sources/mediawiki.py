@@ -138,21 +138,25 @@ def _page_links(api: str, title: str, limit: int) -> list[str]:
     return [link["title"] for link in links]
 
 
-def page_images(api: str, title: str) -> list[str]:
-    """Figure filenames the article puts in galleries — the REST media list
-    marks navbox/template chrome showInGallery=false, so filtering on it keeps
-    real article figures (including SVG skeletals) without a name denylist."""
+def page_figures(api: str, title: str) -> list[dict[str, str]]:
+    """Captioned figure files the article puts in galleries.
+
+    The REST media list marks navbox/template chrome showInGallery=false, and
+    real article figures carry a caption while structure depictions usually
+    don't — filtering on both keeps figures and drops infobox duplicates.
+    """
     base = api.split("/w/")[0]
     url = f"{base}/api/rest_v1/page/media-list/{requests.utils.quote(title)}"
     resp = cache.get(url, timeout=15, headers=HEADERS)
     if resp.status_code != 200:
         return []
-    items = resp.json().get("items", [])
-    return [
-        item["title"].removeprefix("File:")
-        for item in items
-        if item.get("type") == "image" and item.get("showInGallery")
-    ]
+    ret = []
+    for item in resp.json().get("items", []):
+        caption = (item.get("caption") or {}).get("text", "").strip()
+        if item.get("type") != "image" or not item.get("showInGallery") or not caption:
+            continue
+        ret.append({"file": item["title"].removeprefix("File:"), "caption": caption})
+    return ret
 
 
 def section_links(api: str, title: str, heading: str) -> list[str]:

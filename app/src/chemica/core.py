@@ -344,17 +344,18 @@ def fetch_hazards(name: str) -> HazardProfile | None:
     return _try(source.fetch_hazards, compound.cid)
 
 
-def fetch_figures(name: str) -> list[str]:
-    """Figure filenames from the resolved Wikipedia article — for the
-    deferred figure strip. page_images already filters to gallery-flagged
-    media, so SVG skeletals survive alongside rasters."""
+def fetch_figures(name: str) -> list[dict[str, str]]:
+    """Captioned figures from the resolved Wikipedia article — for the
+    deferred figure strip. page_figures filters to gallery-flagged media
+    with captions, which drops navbox chrome and infobox-duplicating
+    structure depictions."""
     from chemica.sources import mediawiki
     from chemica.sources.wikipedia import API, WikipediaSource
 
     article = _try(WikipediaSource().fetch_article, name)
     if article is None:
         return []
-    return mediawiki.page_images(API, article.title)
+    return mediawiki.page_figures(API, article.title)
 
 
 def _resolve_cross_references(name: str, articles: list[Article], compound: Compound | None) -> list[CrossReference]:

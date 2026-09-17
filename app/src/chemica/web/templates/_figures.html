@@ -1,8 +1,8 @@
 {% if figures %}
 <div class="figure-strip" id="panel-figures">
-  {% for filename in figures[:8] %}
-  <a class="figure" href="https://en.wikipedia.org/wiki/File:{{ filename }}" target="_blank" rel="noopener">
-    <img src="/image/{{ filename | urlencode }}?width=280" alt="{{ filename.rsplit('.', 1)[0] | replace('_', ' ') }}" loading="lazy">
+  {% for fig in figures[:8] %}
+  <a class="figure" href="https://en.wikipedia.org/wiki/File:{{ fig.file }}" target="_blank" rel="noopener" title="{{ fig.caption }}">
+    <img src="/image/{{ fig.file | urlencode }}?width=280" alt="{{ fig.caption }}" loading="lazy">
   </a>
   {% endfor %}
 </div>
