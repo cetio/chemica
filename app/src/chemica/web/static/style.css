@@ -200,6 +200,9 @@ button:hover { border-color: var(--accent); }
     color: var(--dim);
     text-decoration: none;
     border-left: 2px solid var(--line);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .toc-list a:hover { color: var(--text); border-left-color: var(--accent); }
@@ -369,7 +372,7 @@ details.section-expander details.section-expander summary
     margin: 0 auto 10px;
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    background: var(--panel-2);
+    background: #fafafa;
     filter: invert(1) hue-rotate(180deg);
 }
 
@@ -819,7 +822,12 @@ details.section-expander details.section-expander summary
     text-align: center;
 }
 
-.structure-views .structure-image { margin-bottom: 0; }
+.structure-views .structure-image
+{
+    margin-bottom: 0;
+    height: 220px;
+    object-fit: contain;
+}
 
 .view-toggle
 {

@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     screenOffset: { x: 16, y: -14 },
                     fontSize: 11,
                     fontColor: "#e8eaf0",
-                    backgroundColor: "#1d2128",
+                    backgroundColor: "#050505",
                     backgroundOpacity: 0.85,
                     borderColor: "#5ee0a0",
                     borderThickness: 1,
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const build = (data) => {
         mount.textContent = "";
         viewer = $3Dmol.createViewer(mount, {
-            backgroundColor: "#1d2128",
+            backgroundColor: "#050505",
             projection: "perspective",
         });
         viewer.addModel(data, "sdf");
