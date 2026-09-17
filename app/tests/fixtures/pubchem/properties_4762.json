@@ -1,0 +1,18 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 4762,
+        "Charge": 0,
+        "ConnectivitySMILES": "CC1C(OCCN1)C2=CC=CC=C2",
+        "InChI": "InChI=1S/C11H15NO/c1-9-11(13-8-7-12-9)10-5-3-2-4-6-10/h2-6,9,11-12H,7-8H2,1H3",
+        "InChIKey": "OOBHFESNSZDWIU-UHFFFAOYSA-N",
+        "MolecularFormula": "C11H15NO",
+        "MolecularWeight": "177.24",
+        "MonoisotopicMass": "177.115364102",
+        "TPSA": 21.3,
+        "XLogP": 1.4
+      }
+    ]
+  }
+}

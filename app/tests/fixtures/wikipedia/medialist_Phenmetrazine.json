@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "leadImage": true,
+      "section_id": 0,
+      "showInGallery": true,
+      "srcset": [
+        {
+          "scale": "1x",
+          "src": "//thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/Phenmetrazine.svg/500px-Phenmetrazine.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+        }
+      ],
+      "title": "File:Phenmetrazine.svg",
+      "type": "image"
+    },
+    {
+      "caption": {
+        "html": "",
+        "text": ""
+      },
+      "leadImage": false,
+      "section_id": 6,
+      "showInGallery": true,
+      "srcset": [
+        {
+          "scale": "1x",
+          "src": "//thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/Phenmetrazine_Synthesis.svg/500px-Phenmetrazine_Synthesis.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+        }
+      ],
+      "title": "File:Phenmetrazine_Synthesis.svg",
+      "type": "image"
+    }
+  ],
+  "revision": "1352010212",
+  "tid": "77d93bfa-4563-11f1-a115-540f0335bae8"
+}

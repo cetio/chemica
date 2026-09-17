@@ -97,6 +97,18 @@ def test_fetch_article_aspirin(recording):
     assert "acetylsalicylic acid" in lead.text
 
 
+def test_wikipedia_extract_strips_tooltip_artifacts(recording):
+    # explaintext flattens {{Tooltip|EC50|half-maximal…}} into the literal
+    # 'EC50Tooltip half-maximal…' — the template name glues onto the term.
+    # Phenmetrazine's extract carries several (EC50, INN, USAN, BAN).
+    article = WikipediaSource().fetch_article("phenmetrazine")
+
+    assert isinstance(article, Article)
+    text = "\n".join(section.text for section in article.sections)
+    assert "Tooltip" not in text
+    assert "EC50" in text
+
+
 def test_fetch_article_missing_returns_none(monkeypatch):
     def missing_page(url: str, *args: Any, **kwargs: Any) -> _StubResponse:
         if "action=query" in url:

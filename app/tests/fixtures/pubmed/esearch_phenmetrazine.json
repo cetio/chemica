@@ -1,0 +1,25 @@
+{
+  "esearchresult": {
+    "count": "541",
+    "idlist": [
+      "42612772",
+      "42550430",
+      "39903277",
+      "38499566",
+      "37968919"
+    ],
+    "querytranslation": "\"phenmetrazine\"[Supplementary Concept] OR \"phenmetrazine\"[All Fields] OR \"phenmetrazine\"[MeSH Terms]",
+    "retmax": "5",
+    "retstart": "0",
+    "translationset": [
+      {
+        "from": "phenmetrazine",
+        "to": "\"phenmetrazine\"[Supplementary Concept] OR \"phenmetrazine\"[All Fields] OR \"phenmetrazine\"[MeSH Terms]"
+      }
+    ]
+  },
+  "header": {
+    "type": "esearch",
+    "version": "0.3"
+  }
+}

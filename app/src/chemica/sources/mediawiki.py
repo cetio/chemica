@@ -233,6 +233,13 @@ def _section_links(api: str, title: str, heading: str) -> list[str]:
     return [link["title"] for link in links if link.get("ns") == 0]
 
 
+# explaintext flattens {{Tooltip|EC50|half-maximal…}} to 'EC50Tooltip
+# half-maximal…' — the template name glues onto the term. The all-caps/digit
+# anchor keeps it to acronym-style terms (EC50, INN, USAN, BAN) and leaves
+# ordinary words alone.
+_TOOLTIP_RE = re.compile(r"\b([A-Z0-9]{2,})Tooltip ")
+
+
 def parse_sections(extract: str, title: str) -> list[Section]:
     """Split a plain-text extract into titled sections at == markers.
 
@@ -241,6 +248,7 @@ def parse_sections(extract: str, title: str) -> list[Section]:
     _EXCLUDED_HEADINGS and their subsections are dropped.
     """
     sections: list[Section] = []
+    extract = _TOOLTIP_RE.sub(r"\1 ", extract)
     matches = list(_SECTION_RE.finditer(extract))
     if not matches:
         # No section markers — the whole extract is the lead.

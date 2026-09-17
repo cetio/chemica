@@ -1,0 +1,18 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "normalized": [
+      {
+        "from": "phenmetrazine",
+        "to": "Phenmetrazine"
+      }
+    ],
+    "pages": {
+      "2276394": {
+        "ns": 0,
+        "pageid": 2276394,
+        "title": "Phenmetrazine"
+      }
+    }
+  }
+}
