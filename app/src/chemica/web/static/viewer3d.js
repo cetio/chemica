@@ -7,27 +7,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggle = wrap.querySelector(".view-toggle");
 
     const baseStyle = { stick: { radius: 0.14 }, sphere: { scale: 0.26 } };
-    const flatStyle = { stick: { radius: 0.07 } };
     const hoverStyle = { stick: { radius: 0.2 }, sphere: { scale: 0.44 } };
-    const flatHoverStyle = { stick: { radius: 0.12 } };
 
-    const sdfs = {};
     let viewer = null;
+    let sdf = null;
     let current = null;
 
-    const fetchSdf = (view) => {
-        if (sdfs[view]) return Promise.resolve(sdfs[view]);
-        const url = view === "2d" ? `${mount.dataset.sdf}?flat=1` : mount.dataset.sdf;
-        return fetch(url)
-            .then((resp) => (resp.ok ? resp.text() : Promise.reject(resp.status)))
-            .then((sdf) => {
-                if (!sdf.trim()) throw new Error("empty sdf");
-                sdfs[view] = sdf;
-                return sdf;
-            });
-    };
-
-    const wireHover = (style, hover) => {
+    const wireHover = () => {
         viewer.setHoverable(
             {},
             true,
@@ -38,13 +24,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     screenOffset: { x: 16, y: -14 },
                     fontSize: 11,
                     fontColor: "#e8eaf0",
-                    backgroundColor: "#101215",
+                    backgroundColor: "#1d2128",
                     backgroundOpacity: 0.85,
                     borderColor: "#5ee0a0",
                     borderThickness: 1,
                     padding: 3,
                 });
-                viewer.setStyle({ serial: atom.serial }, hover);
+                viewer.setStyle({ serial: atom.serial }, hoverStyle);
                 viewer.render();
             },
             (atom) => {
@@ -52,22 +38,22 @@ document.addEventListener("DOMContentLoaded", () => {
                     viewer.removeLabel(atom.hoverLabel);
                     atom.hoverLabel = null;
                 }
-                viewer.setStyle({ serial: atom.serial }, style);
+                viewer.setStyle({ serial: atom.serial }, baseStyle);
                 viewer.render();
             },
         );
         viewer.setHoverDuration(150);
     };
 
-    const build = (sdf, flat) => {
+    const build = (data) => {
         mount.textContent = "";
         viewer = $3Dmol.createViewer(mount, {
-            backgroundColor: "#101215",
-            projection: flat ? "orthographic" : "perspective",
+            backgroundColor: "#1d2128",
+            projection: "perspective",
         });
-        viewer.addModel(sdf, "sdf");
-        viewer.setStyle({}, flat ? flatStyle : baseStyle);
-        wireHover(flat ? flatStyle : baseStyle, flat ? flatHoverStyle : hoverStyle);
+        viewer.addModel(data, "sdf");
+        viewer.setStyle({}, baseStyle);
+        wireHover();
         viewer.zoomTo();
         viewer.render();
     };
@@ -80,23 +66,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const show = (view) => {
         if (view === current) return;
         mark(view);
-        fetchSdf(view)
-            .then((sdf) => {
-                current = view;
+        current = view;
+        if (view === "2d") {
+            // The PubChem PNG on the same dark plate the xref cards use — a
+            // proper 2D depiction, not a flattened conformer.
+            mount.hidden = true;
+            image.hidden = false;
+            return;
+        }
+        const ready = sdf ? Promise.resolve(sdf) : fetch(mount.dataset.sdf)
+            .then((resp) => (resp.ok ? resp.text() : Promise.reject(resp.status)))
+            .then((data) => {
+                if (!data.trim()) throw new Error("empty sdf");
+                sdf = data;
+                return data;
+            });
+        ready
+            .then((data) => {
                 mount.hidden = false;
                 image.hidden = true;
-                build(sdf, view === "2d");
+                build(data);
             })
             .catch(() => {
-                if (view === "3d") {
-                    // No conformer (or transient upstream failure): degrade to the
-                    // flat depiction on the same dark canvas, not the white PNG.
-                    show("2d");
-                    return;
-                }
-                // The PubChem PNG remains the no-WebGL / no-SDF fallback.
-                mount.hidden = true;
-                image.hidden = false;
+                // No conformer or transient upstream failure: the static
+                // depiction is the honest fallback.
+                show("2d");
+                toggle.querySelector('button[data-view="3d"]').disabled = true;
             });
     };
 
