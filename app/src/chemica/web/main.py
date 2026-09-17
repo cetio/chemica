@@ -19,6 +19,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.types import Scope
 
 from chemica import cache
 from chemica.core import (
@@ -54,11 +55,20 @@ PROPERTY_ROWS: list[tuple[str, Any]] = [
     ("XLogP", lambda c: c.xlogp),
 ]
 
+class RevalidatingStaticFiles(StaticFiles):
+    """Static files that always revalidate — assets churn too fast for stale caching."""
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        ret = await super().get_response(path, scope)
+        ret.headers["Cache-Control"] = "no-cache"
+        return ret
+
+
 app = FastAPI(title="Chemica")
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["subscript"] = lambda value: re.sub(r"\d+", lambda m: f"<sub>{m.group()}</sub>", value or "")
-app.mount("/static", StaticFiles(directory=str(TEMPLATES_DIR.parent / "static")), name="static")
+app.mount("/static", RevalidatingStaticFiles(directory=str(TEMPLATES_DIR.parent / "static")), name="static")
 
 
 def _display(value: Any) -> str:
@@ -249,11 +259,13 @@ def figures_fragment(request: Request, name: str) -> HTMLResponse:
 def hazards_fragment(request: Request, name: str) -> HTMLResponse:
     """Deferred GHS hazard card — the slot always settles, data or decline."""
     hazards = fetch_hazards(name)
+    profile = fetch_drug_profile(name)
     return templates.TemplateResponse(
         request,
         "_hazards.html",
         {
             "hazards": hazards,
+            "black_box": bool(profile and profile.black_box),
             "statements": _clean_statements(hazards.statements) if hazards else [],
         },
     )
