@@ -862,3 +862,7 @@ details.section-expander details.section-expander summary
 .topbar-links a:hover { color: var(--text); text-decoration: none; }
 
 .topbar .search input { width: 240px; padding: 5px 10px; font-size: 13px; }
+
+/* The home page IS a search box — a second one in the topbar reads as chrome
+   duplication. Hide the bar's search only where the hero search exists. */
+body:has(.home) .topbar .search { visibility: hidden; }
