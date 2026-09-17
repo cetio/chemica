@@ -364,7 +364,8 @@ details.section-expander details.section-expander summary
 {
     display: inline-block;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
+    font-family: "IBM Plex Mono", monospace;
     padding: 0;
     vertical-align: baseline;
     margin-left: 8px;
@@ -384,8 +385,8 @@ details.section-expander details.section-expander summary
 .article-classes .source-tag { font-size: 9px; font-style: normal; }
 
 .source-pw { color: #f5b94f; }
-.source-pubmed { color: #7f9fe0; }
-.source-wp { color: #9ca3af; }
+.source-pubmed { color: #5fd4c8; }
+.source-wp { color: #c9a7f0; }
 .source-pubchem { color: #7fb0e8; }
 
 .dosage-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -423,7 +424,7 @@ details.section-expander details.section-expander summary
     margin-bottom: 8px;
 }
 
-.gantt-label { width: 84px; flex-shrink: 0; font-size: 13px; font-weight: 600; }
+.gantt-label { width: 84px; flex-shrink: 0; align-self: flex-start; line-height: 24px; font-size: 13px; font-weight: 600; }
 
 .gantt-track
 {
@@ -443,17 +444,14 @@ details.section-expander details.section-expander summary
     min-width: 2px;
 }
 
-/* Labels bleed past narrow segments rather than elipsizing into mush — the
-   dark halo keeps them legible over whatever segment they overlap. */
-.gantt-seg-label
+.gantt-body { flex: 1; min-width: 0; }
+
+.gantt-caption
 {
-    display: block;
-    font-size: 10.5px;
-    line-height: 24px;
-    padding: 0 6px;
-    white-space: nowrap;
-    color: var(--text);
-    text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 4px var(--bg);
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--dim);
+    text-transform: capitalize;
 }
 
 /* Neutral slate ramp for the phases; mint is reserved for the peak and for
@@ -464,7 +462,7 @@ details.section-expander details.section-expander summary
 .phase-offset { background: rgba(152, 160, 173, 0.4); }
 .phase-aftereffects { background: rgba(152, 160, 173, 0.14); }
 
-.gantt-total { width: 90px; flex-shrink: 0; font-size: 12px; color: var(--dim); }
+.gantt-total { width: 90px; flex-shrink: 0; align-self: flex-start; line-height: 24px; font-size: 12px; color: var(--dim); }
 
 .gantt-legend
 {
@@ -524,7 +522,15 @@ details.section-expander details.section-expander summary
 
 .cross-ref-item:hover .xref-card { display: block; }
 
-.xref-card img { width: 100%; border-radius: var(--radius); background: #fff; }
+/* PubChem PNGs are black-on-white line art; inverting luminance while
+   hue-rotating keeps atom colors intact and reads native on the dark card. */
+.xref-card img
+{
+    width: 100%;
+    border-radius: var(--radius);
+    background: var(--panel-2);
+    filter: invert(1) hue-rotate(180deg);
+}
 .xref-card-name { font-size: 13px; font-weight: 600; margin-top: 6px; }
 .xref-card-formula { font-family: var(--mono); font-size: 12px; color: var(--dim); }
 
