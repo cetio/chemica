@@ -514,6 +514,20 @@ details.section-expander details.section-expander summary
 
 .cross-ref-item > a:hover { border-bottom-color: var(--accent); text-decoration: none; }
 
+/* Persistent specimen mark: same PubChem PNG + invert the hover card uses,
+   shrunk into the link so the rail reads as a field guide, not a word list. */
+.xref-mark
+{
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    vertical-align: -6px;
+    margin-right: 5px;
+    border-radius: 3px;
+    filter: invert(1) hue-rotate(180deg);
+    opacity: 0.9;
+}
+
 .xref-card
 {
     display: none;

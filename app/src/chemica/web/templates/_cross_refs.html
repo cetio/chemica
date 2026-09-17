@@ -3,7 +3,7 @@
   <ul class="cross-ref-list">
     {% for xref in cross_references %}
     <li class="cross-ref-item">
-      <a href="/compound/{{ xref.name }}">{{ xref.name }}</a>
+      <a href="/compound/{{ xref.name }}">{% if xref.compound and xref.compound.cid %}<img class="xref-mark" src="/structure/{{ xref.compound.cid }}.png" alt="" loading="lazy">{% endif %}{{ xref.name }}</a>
       {% if xref.compound and xref.compound.cid %}
       <div class="xref-card">
         <img src="/structure/{{ xref.compound.cid }}.png" alt="{{ xref.name }}" loading="lazy">
