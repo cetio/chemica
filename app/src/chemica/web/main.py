@@ -24,6 +24,7 @@ from starlette.types import Scope
 from chemica import cache
 from chemica.core import (
     Compound,
+    fetch_compound,
     fetch_compound_page,
     fetch_cross_references,
     fetch_drug_profile,
@@ -168,20 +169,22 @@ def suggest(q: str = "") -> Response:
 
 @app.get("/compound/{name}", response_class=HTMLResponse)
 def compound_page(request: Request, name: str, via: str = "") -> HTMLResponse:
+    # Canonical composition: when PubChem resolves the query to a different
+    # title, send the browser to the canonical URL so every source composes
+    # around one identity ('Special K' → Ketamine) instead of Frankenpaging.
+    # Beyond-case only — 'ketamine' serves in place, 'special k' hops.
+    # ?via= keeps the queried term visible as a provenance crumb.
+    resolved = fetch_compound(name)
+    if resolved is not None and resolved.name and resolved.name.lower() != name.lower():
+        target = f"/compound/{requests.utils.quote(resolved.name, safe='')}"
+        return RedirectResponse(f"{target}?via={requests.utils.quote(name, safe='')}", status_code=303)
+
     page = fetch_compound_page(name, defer={"references", "cross_references"})
 
     if page.compound is None and not page.articles:
         return templates.TemplateResponse(request, "not_found.html", {"query": name}, status_code=404)
 
     compound = page.compound
-    # Canonical composition: when PubChem resolves the query to a different
-    # title, send the browser to the canonical URL so every source composes
-    # around one identity ('Special K' → Ketamine) instead of Frankenpaging.
-    # ?via= keeps the queried term visible as a provenance crumb.
-    if compound is not None and compound.name and compound.name != name:
-        target = f"/compound/{requests.utils.quote(compound.name)}"
-        return RedirectResponse(f"{target}?via={requests.utils.quote(name)}", status_code=303)
-
     by_source = {a.source: a for a in page.articles if a.source}
     article = (
         by_source.get("wikipedia") or by_source.get("psychonautwiki") or (page.articles[0] if page.articles else None)
