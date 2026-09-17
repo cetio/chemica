@@ -55,6 +55,7 @@ PROPERTY_ROWS: list[tuple[str, Any]] = [
     ("XLogP", lambda c: c.xlogp),
 ]
 
+
 class RevalidatingStaticFiles(StaticFiles):
     """Static files that always revalidate — assets churn too fast for stale caching."""
 

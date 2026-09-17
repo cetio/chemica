@@ -228,7 +228,10 @@ details.section-expander
 {
     border-top: 1px solid var(--line);
     padding: 2px 0;
+    scroll-margin-top: 58px;
 }
+
+.panel, .fragment-slot { scroll-margin-top: 58px; }
 
 details.section-expander summary
 {
@@ -345,9 +348,13 @@ details.section-expander details.section-expander summary
 .panel
 {
     border-top: 1px solid var(--line);
-    padding: 14px 0 2px;
+    padding: 14px 0 12px;
     margin-top: 22px;
 }
+
+/* Sticky topbar (46px) plus breathing room — anchor jumps land sections
+   just under it instead of shearing their tops off. */
+.article [id] { scroll-margin-top: 58px; }
 
 .rail .panel { margin-top: 0; }
 
@@ -369,6 +376,14 @@ details.section-expander details.section-expander summary
 }
 
 .source-tag::before { content: "· "; color: var(--line); }
+
+.source-icon
+{
+    width: 12px;
+    height: 12px;
+    vertical-align: -1.5px;
+    margin-right: 3px;
+}
 
 .article-classes
 {
@@ -455,11 +470,11 @@ details.section-expander details.section-expander summary
 
 /* Neutral slate ramp for the phases; mint is reserved for the peak and for
    interactive elements — five shades of mint reads as arbitrary emphasis. */
-.phase-onset { background: rgba(152, 160, 173, 0.22); }
-.phase-comeup { background: rgba(152, 160, 173, 0.4); }
+.phase-onset { background: rgba(127, 176, 232, 0.55); }
+.phase-comeup { background: rgba(245, 185, 79, 0.75); }
 .phase-peak { background: rgba(94, 224, 160, 0.9); }
-.phase-offset { background: rgba(152, 160, 173, 0.4); }
-.phase-aftereffects { background: rgba(152, 160, 173, 0.14); }
+.phase-offset { background: rgba(201, 167, 240, 0.6); }
+.phase-aftereffects { background: rgba(95, 212, 200, 0.3); }
 
 .gantt-total { width: 90px; flex-shrink: 0; align-self: flex-start; line-height: 24px; font-size: 12px; color: var(--dim); }
 
@@ -678,7 +693,8 @@ details.section-expander details.section-expander summary
 }
 
 .effect-tags { margin-top: 6px; }
-.effect-group { margin-top: 5px; }
+.effect-group { margin-top: 9px; }
+.subjective-panel { padding-bottom: 18px; }
 
 .effect-group-label
 {

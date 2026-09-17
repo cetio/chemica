@@ -1,5 +1,5 @@
 <section class="panel hazards-panel" id="panel-hazards">
-  <h2 class="panel-heading">Hazards <span class="source-tag source-pubchem" title="PubChem GHS">PC</span></h2>
+  <h2 class="panel-heading">Hazards <span class="source-tag source-pubchem" title="PubChem GHS"><img class="source-icon" src="/static/icons/pc.svg" alt="">PC</span></h2>
   {% if hazards %}
   <div class="hazards-head">
     {% for pic in hazards.pictograms %}
@@ -7,6 +7,10 @@
     {% endfor %}
     {% if hazards.signal %}<span class="ghs-signal ghs-signal-{{ hazards.signal | lower }}">{{ hazards.signal }}</span>{% endif %}
   </div>
+  {% endif %}
+  {% if black_box %}
+  <p class="profile-warning">Black box warning on the FDA label.</p>
+  {% endif %}
   {% if statements %}
   <ul class="hazards-list">
     {% for s in statements %}
@@ -14,7 +18,7 @@
     {% endfor %}
   </ul>
   {% endif %}
-  {% else %}
+  {% if not hazards and not black_box %}
   <p class="fragment-decline">No GHS hazard data on PubChem.</p>
   {% endif %}
 </section>
