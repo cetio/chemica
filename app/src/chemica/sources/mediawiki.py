@@ -155,6 +155,7 @@ def page_figures(api: str, title: str) -> list[dict[str, str]]:
         caption = (item.get("caption") or {}).get("text", "").strip()
         if item.get("type") != "image" or not item.get("showInGallery") or not caption:
             continue
+        caption = re.sub(r"\[\d+\]", "", caption).strip()
         ret.append({"file": item["title"].removeprefix("File:"), "caption": caption})
     return ret
 
