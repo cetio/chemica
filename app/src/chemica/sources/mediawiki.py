@@ -54,6 +54,14 @@ _LINKS: dict[tuple[str, str, int], list[str]] = {}
 _SECTION_LINKS: dict[tuple[str, str, str], list[str]] = {}
 
 
+def _not_missing(resp: requests.Response) -> bool:
+    """ok= predicate: a query whose every page is 'missing' is a semantic
+    miss — an HTTP 200 we must not persist for the TTL."""
+    pages = resp.json().get("query", {}).get("pages", {})
+    page_iter = pages.values() if isinstance(pages, dict) else pages
+    return any("missing" not in page for page in page_iter)
+
+
 def resolve_title(api: str, query: str) -> str | None:
     """Resolve a search term to a canonical page title, or None if missing."""
     key = (api, query.lower())
@@ -90,7 +98,7 @@ def _resolve_title(api: str, query: str) -> str | None:
 
 def _query_page(api: str, title: str) -> dict | None:
     url = f"{api}?action=query&prop=pageprops&titles={requests.utils.quote(title)}&format=json&redirects=1"
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=_not_missing)
     if resp.status_code != 200:
         return None
     pages = resp.json().get("query", {}).get("pages", {})
@@ -99,7 +107,7 @@ def _query_page(api: str, title: str) -> dict | None:
 
 def _opensearch_title(api: str, query: str) -> str | None:
     url = f"{api}?action=opensearch&search={requests.utils.quote(query)}&limit=1&namespace=0&format=json"
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=lambda r: len(r.json()) > 1 and bool(r.json()[1]))
     if resp.status_code != 200:
         return None
     try:
@@ -125,7 +133,7 @@ def _extract_sections(api: str, title: str) -> list[Section]:
         f"{api}?action=query&prop=extracts&titles={requests.utils.quote(title)}"
         f"&format=json&explaintext=1&exsectionformat=wiki"
     )
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=_not_missing)
     if resp.status_code != 200:
         return []
     pages = resp.json().get("query", {}).get("pages", {})
@@ -156,7 +164,7 @@ def _page_links(api: str, title: str, limit: int) -> list[str]:
         f"{api}?action=query&prop=links&titles={requests.utils.quote(title)}"
         f"&plnamespace=0&pllimit={limit}&format=json&formatversion=2"
     )
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=_not_missing)
     if resp.status_code != 200:
         return []
     pages = resp.json().get("query", {}).get("pages", [])
@@ -241,7 +249,7 @@ def section_links(api: str, title: str, heading: str) -> list[str]:
 
 def _section_links(api: str, title: str, heading: str) -> list[str]:
     url = f"{api}?action=parse&page={requests.utils.quote(title)}&prop=sections&format=json&formatversion=2"
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=lambda r: "parse" in r.json())
     if resp.status_code != 200:
         return []
     sections = resp.json().get("parse", {}).get("sections", [])
@@ -254,7 +262,7 @@ def _section_links(api: str, title: str, heading: str) -> list[str]:
     url = (
         f"{api}?action=parse&page={requests.utils.quote(title)}&prop=links&section={index}&format=json&formatversion=2"
     )
-    resp = cache.get(url, timeout=15, headers=HEADERS)
+    resp = cache.get(url, timeout=15, headers=HEADERS, ok=lambda r: "parse" in r.json())
     if resp.status_code != 200:
         return []
     links = resp.json().get("parse", {}).get("links", [])
