@@ -286,10 +286,7 @@ def article_image(filename: str, width: int = 400) -> Response:
     if ".." in filename or "/" in filename:
         return Response(status_code=400)
     width = min(max(width, 64), 1200)
-    url = (
-        "https://en.wikipedia.org/wiki/Special:FilePath/"
-        f"{requests.utils.quote(filename)}?width={width}"
-    )
+    url = f"https://en.wikipedia.org/wiki/Special:FilePath/{requests.utils.quote(filename)}?width={width}"
     resp = None
     for attempt in range(3):
         resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
