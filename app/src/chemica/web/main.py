@@ -196,6 +196,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "dosages": [replace(d, bioavailability=_clean_field(d.bioavailability)) for d in page.dose_ladders],
             "timelines": [{"route": e.route, "total": e.total, "segments": _segments(e)} for e in page.effects],
             "subjective": page.subjective,
+            "pw_resolved": "psychonautwiki" in by_source,
         },
     )
 
