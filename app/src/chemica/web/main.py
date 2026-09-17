@@ -260,9 +260,10 @@ def hazards_fragment(request: Request, name: str) -> HTMLResponse:
 
 
 @app.get("/sdf/{cid}")
-def structure_sdf(cid: int) -> Response:
+def structure_sdf(cid: int, flat: bool = False) -> Response:
     """Proxy PubChem's 3D conformer SDF for the 3Dmol.js viewer."""
-    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/SDF?record_type=3d"
+    record_type = "2d" if flat else "3d"
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/SDF?record_type={record_type}"
     resp = None
     for attempt in range(3):
         resp = requests.get(url, timeout=15, headers={"User-Agent": "chemica/0.1"})
