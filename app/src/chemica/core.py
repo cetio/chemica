@@ -344,6 +344,23 @@ def fetch_hazards(name: str) -> HazardProfile | None:
     return _try(source.fetch_hazards, compound.cid)
 
 
+def fetch_figures(name: str) -> list[str]:
+    """Figure filenames from the resolved Wikipedia article — for the
+    deferred figure strip. Raster images only: SVG in WP's image list is
+    overwhelmingly UI chrome (edit icons, checkmarks, logos)."""
+    from chemica.sources import mediawiki
+    from chemica.sources.wikipedia import API, WikipediaSource
+
+    article = _try(WikipediaSource().fetch_article, name)
+    if article is None:
+        return []
+    return [
+        filename
+        for filename in mediawiki.page_images(API, article.title)
+        if filename.rsplit(".", 1)[-1].lower() in {"jpg", "jpeg", "png", "webp"}
+    ]
+
+
 def _resolve_cross_references(name: str, articles: list[Article], compound: Compound | None) -> list[CrossReference]:
     from chemica.crossrefs import extract_compound_mentions
     from chemica.sources.mediawiki import page_links as wiki_links

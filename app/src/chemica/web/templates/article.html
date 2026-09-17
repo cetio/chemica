@@ -50,6 +50,8 @@
         {% endfor %}
       {% endif %}
 
+      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/figures"></div>
+
       <div class="fragment-slot" id="panel-hazards" data-fragment="/compound/{{ name | urlencode }}/hazards">
         <div class="fragment-loading">Loading hazards&#8230;</div>
       </div>
