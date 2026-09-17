@@ -9,7 +9,12 @@
       {% else %}
         {{ ref.title }}
       {% endif %}
-      {% if ref.snippet %}<div class="reference-snippet">{{ ref.snippet }}</div>{% endif %}
+      {% if ref.snippet %}
+      <details class="reference-detail">
+        <summary><span class="reference-snippet">{{ ref.snippet }}</span></summary>
+        <div class="reference-snippet">{{ ref.snippet }}</div>
+      </details>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>

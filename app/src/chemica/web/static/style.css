@@ -866,3 +866,29 @@ details.section-expander details.section-expander summary
 /* The home page IS a search box — a second one in the topbar reads as chrome
    duplication. Hide the bar's search only where the hero search exists. */
 body:has(.home) .topbar .search { display: none; }
+
+.reference-detail > summary
+{
+    list-style: none;
+    cursor: pointer;
+}
+
+.reference-detail > summary::-webkit-details-marker { display: none; }
+
+.reference-detail > summary .reference-snippet
+{
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.reference-detail > summary::after
+{
+    content: "more";
+    color: var(--accent);
+    font-size: 12px;
+}
+
+.reference-detail[open] > summary .reference-snippet { display: none; }
+.reference-detail[open] > summary::after { content: "less"; }
