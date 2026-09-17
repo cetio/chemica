@@ -167,10 +167,9 @@
     <aside class="rail">
       {% if compound %}
       <div class="infobox">
-        <div class="infobox-name">{{ compound.name }}</div>
         {% if compound.cid %}
           <div class="structure-views">
-            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}" data-name="{{ compound.name }}">Loading 3D&#8230;</div>
+            <div class="viewer-3d" data-sdf="/sdf/{{ compound.cid }}">Loading 3D&#8230;</div>
             <img class="structure-image"
                  src="/structure/{{ compound.cid }}.png"
                  alt="2D structure of {{ compound.name }}"
@@ -193,7 +192,7 @@
           <p class="infobox-source">Resolved via {{ compound.salt_form }} (salt)</p>
         {% endif %}
         {% if article and article.url %}
-          <p class="infobox-source">Source: <a href="{{ article.url }}">{{ article.title }}</a></p>
+          <p class="infobox-source">Source: <a href="{{ article.url }}">Wikipedia</a></p>
         {% endif %}
         <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/drug-profile"></div>
       </div>
