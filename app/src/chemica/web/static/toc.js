@@ -20,12 +20,22 @@ document.addEventListener("click", (event) => {
 
     const arm = () => {
         if (observer) return;
+        const visible = new Set();
         observer = new IntersectionObserver(
             (entries) => {
-                const visible = entries
-                    .filter((entry) => entry.isIntersecting)
-                    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-                if (visible.length) activate(visible[0].target.id);
+                // Entries only cover targets that changed this batch —
+                // keep a running set so a stale .active can't linger
+                // when the next section's entry lands in a later batch.
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) visible.add(entry.target);
+                    else visible.delete(entry.target);
+                });
+                if (visible.size) {
+                    const top = [...visible].sort(
+                        (a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+                    )[0];
+                    activate(top.id);
+                }
             },
             { rootMargin: "-10% 0px -70% 0px" }
         );
