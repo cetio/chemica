@@ -17,6 +17,7 @@
 <div class="article">
   <header class="article-header">
     <h1 class="article-title">{{ title }}</h1>
+    {% if via %}<p class="infobox-source">Resolved via {{ via }}</p>{% endif %}
     {% if classes %}
       {% set classline = [classes.psychoactive, classes.chemical] | select | join(" · ") %}
       {% if classline %}

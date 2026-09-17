@@ -167,13 +167,20 @@ def suggest(q: str = "") -> Response:
 
 
 @app.get("/compound/{name}", response_class=HTMLResponse)
-def compound_page(request: Request, name: str) -> HTMLResponse:
+def compound_page(request: Request, name: str, via: str = "") -> HTMLResponse:
     page = fetch_compound_page(name, defer={"references", "cross_references"})
 
     if page.compound is None and not page.articles:
         return templates.TemplateResponse(request, "not_found.html", {"query": name}, status_code=404)
 
     compound = page.compound
+    # Canonical composition: when PubChem resolves the query to a different
+    # title, send the browser to the canonical URL so every source composes
+    # around one identity ('Special K' → Ketamine) instead of Frankenpaging.
+    # ?via= keeps the queried term visible as a provenance crumb.
+    if compound is not None and compound.name and compound.name != name:
+        target = f"/compound/{requests.utils.quote(compound.name)}"
+        return RedirectResponse(f"{target}?via={requests.utils.quote(name)}", status_code=303)
 
     by_source = {a.source: a for a in page.articles if a.source}
     article = (
@@ -196,6 +203,7 @@ def compound_page(request: Request, name: str) -> HTMLResponse:
             "dosages": [replace(d, bioavailability=_clean_field(d.bioavailability)) for d in page.dose_ladders],
             "timelines": [{"route": e.route, "total": e.total, "segments": _segments(e)} for e in page.effects],
             "subjective": page.subjective,
+            "via": via,
             "pw_resolved": "psychonautwiki" in by_source,
         },
     )
