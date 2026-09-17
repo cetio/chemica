@@ -123,7 +123,7 @@ def test_sources_satisfy_source_protocol():
     assert isinstance(PubChemSource(), Source)
     assert isinstance(WikipediaSource(), Source)
     assert isinstance(PsychonautWikiSource(), Source)
-    assert isinstance(PubMedSource(), Source)
+    # PubMed is deliberately not a Source — it serves only the references panel.
 
 
 def test_sources_decline_what_they_do_not_own():
@@ -172,19 +172,6 @@ def test_psychonautwiki_declines_aspirin(recording):
     # The source declines rather than serving a search-results page.
     assert PsychonautWikiSource().fetch_article("aspirin") is None
     assert PsychonautWikiSource().fetch_profile("aspirin") == ([], [])
-
-
-def test_pubmed_article_aspirin(recording):
-    # Recorded esearch/efetch for aspirin: five recent papers, each a section.
-    article = PubMedSource().fetch_article("aspirin")
-
-    assert isinstance(article, Article)
-    assert article.source == "pubmed"
-    assert article.url == "https://pubmed.ncbi.nlm.nih.gov/?term=aspirin"
-    assert len(article.sections) == 5
-    for paper in article.sections:
-        assert paper.heading  # paper title
-        assert paper.text  # abstract
 
 
 def test_pubmed_references_aspirin(recording):

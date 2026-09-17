@@ -1,9 +1,9 @@
 """PubMed source — fetch recent literature for a compound name.
 
 Uses NCBI E-utilities: esearch resolves the term to PMIDs, efetch returns
-the citation XML. The data surfaces two ways: an Article (one Section per
-paper, heading = title, text = abstract) and References (one per paper,
-title + pubmed.ncbi.nlm.nih.gov/{pmid}/ link) for the page's references panel.
+the citation XML. The data surfaces as References (one per paper, title +
+pubmed.ncbi.nlm.nih.gov/{pmid}/ link) for the page's references panel —
+PubMed is deliberately not an article source.
 
 Recorded fixtures (see tests/fixtures/) stand in for the live API in the
 pytest suite so CI never depends on network reachability.
@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import requests
 
 from chemica import cache
-from chemica.core import Article, Compound, Reference, Section
+from chemica.core import Compound, Reference
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 HEADERS = {"User-Agent": "chemica/0.1 (compound reference app; contact: cet)"}
@@ -29,19 +29,6 @@ MAX_RESULTS = 5
 
 class PubMedSource:
     name = "pubmed"
-
-    def fetch_article(self, query: str) -> Article | None:
-        papers = self._papers(query)
-        if not papers:
-            return None
-        sections = [Section(heading=title, level=2, text=abstract) for _pmid, title, abstract in papers]
-        return Article(
-            title=query,
-            sections=sections,
-            url=f"{PUBMED_URL}/?term={requests.utils.quote(query)}",
-            source="pubmed",
-            raw={"pmids": [pmid for pmid, _t, _a in papers]},
-        )
 
     def fetch_references(self, query: str) -> list[Reference]:
         """One Reference per paper — title links to the PubMed record."""

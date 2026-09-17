@@ -1,16 +1,16 @@
 """Core data model and fetch interface.
 
-The two entry points the front-ends call:
+`fetch_compound_page(name) -> CompoundPage` is the composer the front-ends
+call; the deferred panels go through the narrower helpers
+(fetch_references, fetch_cross_references, fetch_interactions, fetch_classes,
+fetch_drug_profile, fetch_hazards, fetch_figures). All standalone-importable
+— no web/desktop coupling; a desktop app hangs off the same seam the web
+shell does.
 
-    fetch_compound(name) -> Compound
-    fetch_article(name)  -> Article
-
-Both are standalone-importable — no web/desktop coupling. The desktop app hangs
-off the same seam the web shell does.
-
-Sources are pluggable behind a Source protocol so the first increment ships
-PubChem + Wikipedia and the rest (PsychonautWiki, PubMed/PMC) plug in later
-without touching the front-ends.
+Each upstream sits behind a source class (PubChem, Wikipedia,
+PsychonautWiki, PubMed) whose fetch_* methods return dataclasses or None —
+`_try` turns a source error into a decline so one bad source can't fail
+the page.
 """
 
 from __future__ import annotations
@@ -213,7 +213,8 @@ class CompoundPage:
 
 @runtime_checkable
 class Source(Protocol):
-    """A fetcher the core can blend. First increment ships two of these."""
+    """The article/compound seam a source plugs into — PubMed opts out,
+    serving only references for its own panel."""
 
     name: str
 
@@ -223,9 +224,9 @@ class Source(Protocol):
 
 
 def fetch_compound(name: str) -> Compound | None:
-    """Resolve a name to a Compound via the registered sources.
+    """Resolve a name to a Compound — PubChem is the identity source.
 
-    First increment: PubChem only. Returns None if no source has the compound.
+    Returns None if PubChem has no record for the name.
     """
     from chemica.sources.pubchem import PubChemSource
 
