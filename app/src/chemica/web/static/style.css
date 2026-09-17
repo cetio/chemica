@@ -211,6 +211,33 @@ button:hover { border-color: var(--accent); }
     background: var(--panel);
 }
 
+/* Per-entry source marks: the icon column itself is the dossier/article
+   split — PC/PW/PM on top, a violet-W run marking the Wikipedia prose. */
+.toc-src
+{
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    vertical-align: -1.5px;
+    opacity: 0.8;
+}
+
+.toc-tail { margin-top: 4px; }
+.toc-tail-fold summary
+{
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--dim);
+    cursor: pointer;
+    list-style: none;
+    border-left: 2px solid var(--line);
+}
+.toc-tail-fold summary::before { content: "+ "; color: var(--dim); }
+.toc-tail-fold[open] summary::before { content: "– "; }
+.toc-tail-fold ol { list-style: none; margin: 0; padding: 0; }
+.toc-tail-fold .toc-src { width: 10px; height: 10px; margin-right: 5px; }
+.toc-tail-fold a { font-size: 12px; padding-left: 18px; }
+
 @media (max-width: 1180px) { .toc-rail { display: none; } }
 
 .article-main { flex: 1; min-width: 0; font-family: var(--serif); }
@@ -393,9 +420,6 @@ details.section-expander details.section-expander summary
 }
 
 .article-classes .source-tag { font-size: 9px; font-style: normal; }
-
-.article-source { font-size: 13px; color: var(--dim); margin: 2px 0 4px; }
-.article-source .source-tag { margin-left: 4px; }
 
 .source-pw { color: #f5b94f; }
 .source-pubmed { color: #5fd4c8; }
@@ -706,8 +730,13 @@ details.section-expander details.section-expander summary
 }
 
 .effect-tags { margin-top: 6px; }
-.effect-group { margin-top: 9px; }
+.effect-group { margin-top: 9px; break-inside: avoid; }
 .subjective-panel { padding-bottom: 18px; }
+
+/* Groups vary wildly in length — multicol flows them top-to-bottom-then-right
+   so a 1-item Geometry row doesn't stretch beside a 20-item Cognitive one. */
+.effect-groups { columns: 2; column-gap: 32px; margin-top: 4px; }
+.effect-groups .effect-group:first-child { margin-top: 4px; }
 
 .effect-group-label
 {

@@ -26,24 +26,40 @@
     {% if compound and compound.formula %}
       <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
     {% endif %}
-    {% if article and article.url %}
-      <div class="article-source">Article <a class="source-tag source-wp" href="{{ article.url }}" title="Wikipedia"><img class="source-icon" src="/static/icons/wp.svg" alt="Wikipedia"></a></div>
-    {% endif %}
   </header>
 
   <div class="article-columns">
     <nav class="toc-rail">
       <div class="toc-title">Contents</div>
       <ol class="toc-list">
-        <li><a href="#panel-hazards">Hazards</a></li>
-        <li><a href="#panel-interactions">Dangerous interactions</a></li>
-        {% if dosages %}<li><a href="#panel-dosage">Dosage</a></li>{% endif %}
-        {% if timelines %}<li><a href="#panel-effects">Effects timeline</a></li>{% endif %}
-        {% if subjective %}<li><a href="#panel-subjective">Subjective effects</a></li>{% endif %}
+        <li><a href="#panel-hazards"><img class="toc-src" src="/static/icons/pc.svg" title="PubChem" alt="">Hazards</a></li>
+        <li><a href="#panel-interactions"><img class="toc-src" src="/static/icons/pw.svg" title="PsychonautWiki" alt="">Dangerous interactions</a></li>
+        {% if dosages %}<li><a href="#panel-dosage"><img class="toc-src" src="/static/icons/pw.svg" title="PsychonautWiki" alt="">Dosage</a></li>{% endif %}
+        {% if timelines %}<li><a href="#panel-effects"><img class="toc-src" src="/static/icons/pw.svg" title="PsychonautWiki" alt="">Effects timeline</a></li>{% endif %}
+        {% if subjective %}<li><a href="#panel-subjective"><img class="toc-src" src="/static/icons/pw.svg" title="PsychonautWiki" alt="">Subjective effects</a></li>{% endif %}
+        {% set tail_words = ["history", "society", "culture", "legal", "veterinary", "trafficking", "popular"] %}
+        {% set tail = namespace(found=false) %}
         {% for section, children in section_tree %}
-          <li><a href="#sec-{{ loop.index }}">{{ section.heading }}</a></li>
+          {% set h = section.heading | lower %}
+          {% if not (tail_words | select("in", h) | list) %}
+          <li><a href="#sec-{{ loop.index }}"><img class="toc-src" src="/static/icons/wp.svg" title="Wikipedia" alt="">{{ section.heading }}</a></li>
+          {% else %}{% set tail.found = true %}{% endif %}
         {% endfor %}
-        <li><a href="#panel-references">References</a></li>
+        {% if tail.found %}
+        <li class="toc-tail">
+          <details class="toc-tail-fold">
+            <summary>Further reading</summary>
+            <ol>
+              {% for section, children in section_tree %}
+                {% if tail_words | select("in", section.heading | lower) | list %}
+                <li><a href="#sec-{{ loop.index }}"><img class="toc-src" src="/static/icons/wp.svg" title="Wikipedia" alt="">{{ section.heading }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ol>
+          </details>
+        </li>
+        {% endif %}
+        <li><a href="#panel-references"><img class="toc-src" src="/static/icons/pm.svg" title="PubMed" alt="">References</a></li>
       </ol>
     </nav>
     <div class="article-main">
@@ -142,6 +158,7 @@
         </table>
         {% endif %}
         {% if subjective.effect_groups %}
+        <div class="effect-groups">
           {% for group in subjective.effect_groups %}
           <div class="effect-group">
             {% if group.label %}<span class="effect-group-label">{{ group.label }}</span>{% endif %}
@@ -153,6 +170,7 @@
             </span>
           </div>
           {% endfor %}
+        </div>
         {% elif subjective.effect_tags %}
         <div class="effect-tags">{{ subjective.effect_tags | join(" · ") }}</div>
         {% endif %}
