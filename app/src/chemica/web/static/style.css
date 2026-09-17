@@ -384,6 +384,9 @@ details.section-expander details.section-expander summary
 
 .article-classes .source-tag { font-size: 9px; font-style: normal; }
 
+.article-source { font-size: 13px; color: var(--dim); margin: 2px 0 4px; }
+.article-source .source-tag { margin-left: 4px; }
+
 .source-pw { color: #f5b94f; }
 .source-pubmed { color: #5fd4c8; }
 .source-wp { color: #c9a7f0; }

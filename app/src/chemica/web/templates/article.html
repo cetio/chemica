@@ -26,6 +26,9 @@
     {% if compound and compound.formula %}
       <div class="article-formula">{{ compound.formula | subscript | safe }}</div>
     {% endif %}
+    {% if article and article.url %}
+      <div class="article-source">Article <a class="source-tag source-wp" href="{{ article.url }}" title="Wikipedia">WP</a></div>
+    {% endif %}
   </header>
 
   <div class="article-columns">
@@ -191,9 +194,6 @@
         {% endfor %}
         {% if compound.salt_form %}
           <p class="infobox-source">Resolved via {{ compound.salt_form }} (salt)</p>
-        {% endif %}
-        {% if article and article.url %}
-          <p class="infobox-source">Source: <a class="source-tag source-wp" href="{{ article.url }}" title="Wikipedia">WP</a></p>
         {% endif %}
         <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/drug-profile"></div>
       </div>
