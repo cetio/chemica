@@ -1,9 +1,27 @@
 {% if figures %}
-<div class="figure-strip" id="panel-figures">
-  {% for fig in figures[:8] %}
-  <a class="figure" href="https://en.wikipedia.org/wiki/File:{{ fig.file }}" target="_blank" rel="noopener" title="{{ fig.caption }}">
-    <img src="/image/{{ fig.file | urlencode }}?width=280" alt="{{ fig.caption }}" loading="lazy">
-  </a>
-  {% endfor %}
+<div class="figures" id="panel-figures">
+  {% if frontispiece %}
+    {% set front = figures | selectattr("file", "eq", frontispiece) | first %}
+    {% if front %}
+    <figure class="frontispiece">
+      <a href="https://en.wikipedia.org/wiki/File:{{ front.file }}" target="_blank" rel="noopener" title="{{ front.caption }}">
+        <img src="/image/{{ front.file | urlencode }}?width=480" alt="{{ front.caption }}">
+      </a>
+      <figcaption>{{ front.caption }}</figcaption>
+    </figure>
+    {% endif %}
+  {% endif %}
+  <div class="figure-strip">
+    {% for fig in figures[:8] %}
+      {% if fig.file != frontispiece %}
+      <figure class="section-figure"{% if fig.section %} data-section="{{ fig.section }}"{% endif %}>
+        <a href="https://en.wikipedia.org/wiki/File:{{ fig.file }}" target="_blank" rel="noopener" title="{{ fig.caption }}">
+          <img src="/image/{{ fig.file | urlencode }}?width=320" alt="{{ fig.caption }}" loading="lazy">
+        </a>
+        <figcaption>{{ fig.caption }}</figcaption>
+      </figure>
+      {% endif %}
+    {% endfor %}
+  </div>
 </div>
 {% endif %}

@@ -63,13 +63,13 @@
       </ol>
     </nav>
     <div class="article-main">
+      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/figures"></div>
+
       {% if article and article.sections %}
         {% for paragraph in article.sections[0].text.split("\n\n") %}
           {% if paragraph.strip() %}<p class="lead">{{ paragraph }}</p>{% endif %}
         {% endfor %}
       {% endif %}
-
-      <div class="fragment-slot" data-fragment="/compound/{{ name | urlencode }}/figures"></div>
 
       <div class="fragment-slot" id="panel-hazards" data-fragment="/compound/{{ name | urlencode }}/hazards">
         <div class="fragment-loading">Loading hazards&#8230;</div>
