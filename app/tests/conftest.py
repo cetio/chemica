@@ -19,6 +19,10 @@ import pytest
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures"
 
+# URL shapes that are allowed to have no fixture route — every other unmapped
+# URL fails loudly instead of silently replaying as a 404.
+_ALLOWED_UNMAPPED: tuple[str, ...] = ()
+
 
 class FixtureResponse:
     """Stand-in for requests.Response — just the bits the sources read.
@@ -53,8 +57,14 @@ def recording(monkeypatch):
             cid = _extract_path_segment(url, "/compound/cid/", "/property")
             if "," in cid:
                 return _batched_properties(cid)
+        if any(fragment in url for fragment in _ALLOWED_UNMAPPED):
+            return FixtureResponse(None, status=404)
         path = _fixture_for_url(url)
-        if path is None or not path.exists():
+        if path is None:
+            pytest.fail(
+                f"no fixture route for URL shape: {url} — add a branch in _fixture_for_url or extend _ALLOWED_UNMAPPED"
+            )
+        if not path.exists():
             return FixtureResponse(None, status=404)
         return FixtureResponse(path.read_text(encoding="utf-8"))
 
@@ -80,6 +90,9 @@ def _fixture_for_url(url: str) -> Path | None:
     not-found compound doesn't replay another compound's data.
     """
     if "pubchem.ncbi.nlm.nih.gov" in url:
+        if "/autocomplete/" in url:
+            name = _extract_path_segment(url, "/autocomplete/compound/", "/JSON")
+            return FIXTURE_DIR / "pubchem" / f"autocomplete_{name}.json"
         if "pug_view" in url:
             cid = _extract_path_segment(url, "/compound/", "/JSON")
             heading = _extract_query_param(url, "heading")
@@ -92,6 +105,9 @@ def _fixture_for_url(url: str) -> Path | None:
             if "fastsimilarity" in url:
                 cid = _extract_path_segment(url, "/fastsimilarity_2d/cid/", "/cids")
                 return FIXTURE_DIR / "pubchem" / f"similar_{cid}.json"
+            if "fastidentity" in url:
+                smiles = _extract_path_segment(url, "/smiles/", "/cids")
+                return FIXTURE_DIR / "pubchem" / f"fastidentity_{smiles}.json"
             name = _extract_path_segment(url, "/compound/name/", "/cids")
             return FIXTURE_DIR / "pubchem" / f"cids_{name}.json"
         if "/property/" in url:

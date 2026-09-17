@@ -1,0 +1,18 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 92159,
+        "Charge": 0,
+        "ConnectivitySMILES": "CC1C(OCCN1)C2=CC=CC=C2.Cl",
+        "InChI": "InChI=1S/C11H15NO.ClH/c1-9-11(13-8-7-12-9)10-5-3-2-4-6-10;/h2-6,9,11-12H,7-8H2,1H3;1H",
+        "InChIKey": "VJNXVAVKCZJOFQ-UHFFFAOYSA-N",
+        "MolecularFormula": "C11H16ClNO",
+        "MolecularWeight": "213.70",
+        "MonoisotopicMass": "213.0920418",
+        "TPSA": 21.3,
+        "Title": "Phenmetrazine Hydrochloride"
+      }
+    ]
+  }
+}

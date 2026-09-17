@@ -1,0 +1,25 @@
+{
+  "esearchresult": {
+    "count": "3439",
+    "idlist": [
+      "42746496",
+      "42745840",
+      "42742718",
+      "42738789",
+      "42736602"
+    ],
+    "querytranslation": "\"psilocybin\"[Supplementary Concept] OR \"psilocybin\"[All Fields] OR \"psilocybin\"[MeSH Terms] OR \"psilocybine\"[All Fields] OR \"psilocybin s\"[All Fields]",
+    "retmax": "5",
+    "retstart": "0",
+    "translationset": [
+      {
+        "from": "psilocybin",
+        "to": "\"psilocybin\"[Supplementary Concept] OR \"psilocybin\"[All Fields] OR \"psilocybin\"[MeSH Terms] OR \"psilocybine\"[All Fields] OR \"psilocybin's\"[All Fields]"
+      }
+    ]
+  },
+  "header": {
+    "type": "esearch",
+    "version": "0.3"
+  }
+}

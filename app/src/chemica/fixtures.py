@@ -26,6 +26,8 @@ from urllib.parse import quote
 
 import requests
 
+from chemica.sources.pubchem import _PROPS
+
 FIXTURE_DIR = Path(__file__).resolve().parents[2] / "tests" / "fixtures"
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
@@ -62,17 +64,46 @@ def _record_pubchem(query: str) -> None:
     cid = cids[0]
 
     # properties endpoint — keyed by CID
-    props = "MolecularFormula,MolecularWeight,MonoisotopicMass,Charge,TPSA,XLogP,ConnectivitySMILES,InChI,InChIKey"
-    props_url = f"{PUG}/compound/cid/{cid}/property/{props}/JSON"
+    props_url = f"{PUG}/compound/cid/{cid}/property/{_PROPS}/JSON"
     props_resp = requests.get(props_url, timeout=15)
     if props_resp.status_code == 200:
-        _write(pubchem_dir / f"properties_{cid}.json", props_resp.json())
+        props_body = props_resp.json()
+        _write(pubchem_dir / f"properties_{cid}.json", props_body)
+        _record_freebase(pubchem_dir, props_body)
 
     # synonyms endpoint — keyed by CID
     syn_url = f"{PUG}/compound/cid/{cid}/synonyms/JSON"
     syn_resp = requests.get(syn_url, timeout=15)
     if syn_resp.status_code == 200:
         _write(pubchem_dir / f"synonyms_{cid}.json", syn_resp.json())
+
+
+def _record_freebase(pubchem_dir: Path, props_body: dict) -> None:
+    """Salt/mixture records resolve through fastidentity to the freebase CID —
+    record that hop and the base compound's properties or the fixture replay
+    can't exercise the fallthrough (dot-disconnected ConnectivitySMILES)."""
+    from chemica.sources.pubchem import _ATOM_RE
+
+    rows = props_body.get("PropertyTable", {}).get("Properties", [])
+    if not rows:
+        return
+    smiles = rows[0].get("ConnectivitySMILES") or ""
+    if "." not in smiles:
+        return
+    largest = max(smiles.split("."), key=lambda f: len(_ATOM_RE.findall(f)))
+    fast_url = f"{PUG}/compound/fastidentity/smiles/{quote(largest, safe='')}/cids/JSON"
+    fast_resp = requests.get(fast_url, timeout=15)
+    if fast_resp.status_code != 200:
+        return
+    fast_body = fast_resp.json()
+    _write(pubchem_dir / f"fastidentity_{_safe(largest)}.json", fast_body)
+    base_cids = fast_body.get("IdentifierList", {}).get("CID", [])
+    if not base_cids:
+        return
+    base_props_url = f"{PUG}/compound/cid/{base_cids[0]}/property/{_PROPS}/JSON"
+    base_props_resp = requests.get(base_props_url, timeout=15)
+    if base_props_resp.status_code == 200:
+        _write(pubchem_dir / f"properties_{base_cids[0]}.json", base_props_resp.json())
 
 
 def _record_wikipedia(query: str) -> None:
@@ -144,6 +175,12 @@ def _record_psychonaut(query: str) -> None:
     box_resp = requests.get(box_url, timeout=15, headers=HEADERS)
     if box_resp.status_code == 200:
         _write(pw_dir / f"substancebox_{_safe(title)}.json", box_resp.json())
+
+    # page wikitext — keyed by resolved title (interactions, subjective effects)
+    page_url = f"{PW_API}?action=parse&prop=wikitext&format=json&formatversion=2&page={quote(title)}"
+    page_resp = requests.get(page_url, timeout=15, headers=HEADERS)
+    if page_resp.status_code == 200:
+        _write(pw_dir / f"wikitext_{_safe(title)}.json", page_resp.json())
 
 
 def _record_pubmed(query: str) -> None:

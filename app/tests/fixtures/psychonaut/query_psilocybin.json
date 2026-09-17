@@ -1,0 +1,24 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "normalized": [
+      {
+        "from": "psilocybin",
+        "to": "Psilocybin"
+      }
+    ],
+    "pages": {
+      "14354": {
+        "ns": 0,
+        "pageid": 14354,
+        "title": "Psilocybin mushrooms"
+      }
+    },
+    "redirects": [
+      {
+        "from": "Psilocybin",
+        "to": "Psilocybin mushrooms"
+      }
+    ]
+  }
+}

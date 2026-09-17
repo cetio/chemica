@@ -1,0 +1,18 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "normalized": [
+      {
+        "from": "preludin",
+        "to": "Preludin"
+      }
+    ],
+    "pages": {
+      "-1": {
+        "missing": "",
+        "ns": 0,
+        "title": "Preludin"
+      }
+    }
+  }
+}

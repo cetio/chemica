@@ -1,0 +1,18 @@
+{
+  "batchcomplete": "",
+  "query": {
+    "normalized": [
+      {
+        "from": "psilocybin",
+        "to": "Psilocybin"
+      }
+    ],
+    "pages": {
+      "38468": {
+        "ns": 0,
+        "pageid": 38468,
+        "title": "Psilocybin"
+      }
+    }
+  }
+}

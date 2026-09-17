@@ -1,0 +1,19 @@
+{
+  "PropertyTable": {
+    "Properties": [
+      {
+        "CID": 10624,
+        "Charge": 0,
+        "ConnectivitySMILES": "CN(C)CCC1=CNC2=C1C(=CC=C2)OP(=O)(O)O",
+        "InChI": "InChI=1S/C12H17N2O4P/c1-14(2)7-6-9-8-13-10-4-3-5-11(12(9)10)18-19(15,16)17/h3-5,8,13H,6-7H2,1-2H3,(H2,15,16,17)",
+        "InChIKey": "QVDSEJDULKLHCG-UHFFFAOYSA-N",
+        "MolecularFormula": "C12H17N2O4P",
+        "MolecularWeight": "284.25",
+        "MonoisotopicMass": "284.09259403",
+        "TPSA": 85.8,
+        "Title": "Psilocybin",
+        "XLogP": -1.6
+      }
+    ]
+  }
+}
