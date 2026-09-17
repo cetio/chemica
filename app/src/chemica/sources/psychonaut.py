@@ -144,14 +144,16 @@ class PsychonautWikiSource:
         if not wikitext:
             return None
         groups = _effect_groups(wikitext)
+        addiction = _first(_ADDICTION_RE, wikitext)
         profile = SubjectiveProfile(
-            addiction_potential=_first(_ADDICTION_RE, wikitext),
+            # 'low abuse potential|low abuse' keeps the display side.
+            addiction_potential=addiction.split("|")[-1].strip() if addiction else None,
             effect_tags=list(dict.fromkeys(tag for group in groups for tag in group.effects)),
             effect_groups=groups,
         )
         for span, value in _TOLERANCE_RE.findall(wikitext):
             field_name = "tolerance_" + span.lower()
-            profile = replace(profile, **{field_name: value.strip()})
+            profile = replace(profile, **{field_name: value.split("|")[-1].strip()})
         return profile if profile != SubjectiveProfile() else None
 
     def _page_wikitext(self, query: str) -> str | None:
@@ -258,12 +260,15 @@ def _effect_groups(wikitext: str) -> list[EffectGroup]:
         if template:
             label = template.group(1).capitalize()
         elif subhead:
-            label = subhead.group(1).strip()
+            # Subheads can themselves be annotations (====[[Effect::X]]====).
+            label = _clean_value(subhead.group(1)) or None
         tags = [m.group(1).split("|")[-1].strip() for m in _EFFECT_RE.finditer(line)]
         if tags:
             if not groups or groups[-1].label != label:
                 groups.append(EffectGroup(label=label))
-            groups[-1].effects.extend(tags)
+            for tag in tags:
+                if tag not in groups[-1].effects:
+                    groups[-1].effects.append(tag)
     return groups
 
 
@@ -282,14 +287,15 @@ def _interactions(wikitext: str) -> list[Interaction]:
         refs = _INTERACTION_RE.findall(line)
         if not refs:
             continue
-        # Everything after ' - ' describes the whole line; several
-        # substances on one bullet share it (e.g. GHB / GBL).
-        desc = line.split(" - ", 1)[1] if " - " in line else ""
-        desc = _clean_value(desc) or None
+        # Remove the annotations first, then clean — a ' - ' or '}}' inside a
+        # <ref>/{{template}} tail can otherwise survive as literal text.
+        desc = _INTERACTION_RE.sub("", line)
+        desc = _clean_value(desc)
+        desc = re.sub(r"^[*'\s:\[\]/–—-]+", "", desc) or None
         for severity, substance in refs:
             ret.append(
                 Interaction(
-                    substance=substance.strip(),
+                    substance=substance.split("|")[-1].strip(),
                     severity=severity.lower(),
                     description=desc,
                 )

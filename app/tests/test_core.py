@@ -266,6 +266,38 @@ def test_fetch_classes_ketamine(recording):
     assert classes.psychoactive == "dissociative"
 
 
+def test_fetch_interactions_psilocybin(recording):
+    # Psilocybin's recorded wikitext nests the interaction annotation inside
+    # [[]] ('[[[[UncertainInteraction::Cannabis|Cannabis]]]]') and separates
+    # it from the description with ':' while a ' - ' lives inside a <ref>
+    # citation — both constructs previously leaked markup into output.
+    from chemica.core import fetch_interactions
+
+    interactions = fetch_interactions("psilocybin")
+    by_substance = {i.substance: i for i in interactions}
+    assert "Cannabis" in by_substance
+    cannabis = by_substance["Cannabis"]
+    assert cannabis.severity == "uncertain"
+    assert cannabis.description.startswith("Cannabis can have")
+    for i in interactions:
+        assert "|" not in i.substance
+        assert "{{" not in i.substance and "}}" not in (i.description or "")
+
+
+def test_fetch_subjective_psilocybin(recording):
+    # '[[Addiction potential::low abuse potential|low abuse]]' resolves to the
+    # display side, and '====[[Effect::Geometry]]====' subheads are group
+    # labels — the annotation syntax must not survive into output.
+    from chemica.sources.psychonaut import PsychonautWikiSource
+
+    profile = PsychonautWikiSource().fetch_subjective("psilocybin")
+    assert profile is not None
+    assert profile.addiction_potential == "low abuse"
+    labels = {g.label for g in profile.effect_groups}
+    assert "Geometry" in labels
+    assert all("Effect::" not in (g.label or "") for g in profile.effect_groups)
+
+
 def test_fetch_subjective_ketamine(recording):
     # Recorded PW wikitext annotates addiction potential, tolerance spans,
     # and inline [[Effect::X]] tags through the article body.
