@@ -8,3 +8,7 @@ __pycache__/
 *.egg-info/
 .venv/
 .pytest_cache/
+.playwright-mcp
+# Team/agent workspace docs (local only)
+COORDINATION.md
+ORGANICS.md
