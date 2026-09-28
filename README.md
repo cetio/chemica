@@ -61,19 +61,6 @@ pytest
 Tests run entirely offline against recorded API fixtures (`app/tests/fixtures/`).
 New fixtures are captured with the recorders in `app/src/chemica/fixtures.py`.
 
-## Architecture
-
-The Python package lives under `app/src/chemica/`:
-
-| Path | Contents |
-| --- | --- |
-| `web/main.py` | FastAPI routes: the compound page and the deferred fragment endpoints. |
-| `web/templates/`, `web/static/` | Jinja2 templates, styles, and front-end JavaScript. |
-| `sources/` | One module per upstream API (`pubchem`, `wikipedia`, `psychonaut`, `pubmed`), with shared MediaWiki helpers in `mediawiki.py`. |
-| `core.py` | Composes sources into a `CompoundPage`: parallel first-paint fetch, per-source error isolation, and deferred panel loading. |
-| `crossrefs.py` | Related-compound resolution, batched to stay off the request path. |
-| `cache.py` | Persistent disk cache for upstream HTTP responses. |
-
 ## License
 
 Chemica is licensed under the [AGPL-3.0 license](LICENSE.txt). Third-party assets
