@@ -9,6 +9,5 @@ __pycache__/
 .venv/
 .pytest_cache/
 .playwright-mcp
-# Team/agent workspace docs (local only)
-COORDINATION.md
-ORGANICS.md
+.ruff_cache
+.env

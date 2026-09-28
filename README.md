@@ -3,10 +3,16 @@
 [![License](https://img.shields.io/badge/License-AGPL--3-blue)](LICENSE.txt)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](app/pyproject.toml)
 
+> Chemica was rewritten starting September 2026 to use Python + web hosting to allow for better portability. The original GTK D version is at
 Chemica is a compound-reference web app: give it a substance name and it assembles a sourced dossier —
 properties and identifiers from PubChem, the article from Wikipedia, dosage, effects, and interaction
 data from PsychonautWiki, literature references from PubMed, and GHS hazard pictograms from PubChem's
 safety record — rendered as a single readable page with a live 3D structure viewer.
+
+NEW:
+
+
+OLD:
 
 https://github.com/user-attachments/assets/33b72559-45b5-4a8c-ad70-571d5741e524
 
