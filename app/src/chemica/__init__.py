@@ -1,7 +1,7 @@
-"""chemica — a name becomes a sourced compound article.
+"""Chemica core: fetch and shape compound articles from upstream sources.
 
-The core package owns fetching and shaping. Web and desktop front-ends are thin
-shells over it; nothing in here knows about FastAPI, GTK, or any delivery target.
+This package owns fetching and shaping. Front-ends are thin shells over it, and
+nothing here depends on a delivery target such as FastAPI or GTK.
 """
 
 from chemica.core import (

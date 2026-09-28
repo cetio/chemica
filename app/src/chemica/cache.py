@@ -1,14 +1,15 @@
-"""On-disk HTTP response cache — survives process restarts.
+"""On-disk HTTP response cache that survives process restarts.
 
-Sources route requests through `get` instead of `requests.get` so a cold
-process doesn't re-pay the network for data that hasn't changed. Entries are
-keyed by URL, stored as JSON under ~/.cache/chemica/http/ (binary bodies
-base64-encoded alongside their Content-Type), and expire after _TTL_SECONDS.
-Set CHEMICA_NO_CACHE=1 to bypass entirely (the test suite does — recorded
-fixtures must stay authoritative over anything a live run cached).
+Sources route requests through `get` instead of `requests.get`, so a cold
+process does not re-pay the network for data that has not changed. Entries are
+keyed by URL and stored as JSON under `~/.cache/chemica/http/`, with binary
+bodies base64-encoded alongside their Content-Type, and expire after
+`_TTL_SECONDS`. Set `CHEMICA_NO_CACHE=1` to bypass the cache entirely; the test
+suite does, so recorded fixtures stay authoritative over anything a live run
+cached.
 
-Writes are atomic (tmp file + rename) and misses are single-flight — one
-upstream request per URL at a time — so parallel fetches can't leave a
+Writes are atomic (temporary file plus rename) and misses are single-flight, one
+upstream request per URL at a time, so parallel fetches cannot leave a
 half-written entry or stampede a host.
 """
 
@@ -35,13 +36,14 @@ _locks_guard = threading.Lock()
 
 
 def get(url: str, ok: Callable[[requests.Response], bool] | None = None, **kwargs) -> requests.Response:
-    """Drop-in requests.get with a disk cache for 200 responses.
+    """Drop-in `requests.get` with a disk cache for 200 responses.
 
-    `ok` lets a caller declare that an HTTP-200 body is still a miss — e.g.
-    MediaWiki returns a 'missing' page at 200. Failing `ok` skips the write,
-    and a cached entry that fails it is treated as absent and refetched, so
-    semantic negatives recorded before a rule existed heal on next read
-    instead of pinning a decline until TTL."""
+    `ok` lets a caller declare that an HTTP 200 body is still a miss, for
+    example when MediaWiki returns a 'missing' page at 200. A body that fails
+    `ok` is not written, and a cached entry that fails it is treated as absent
+    and refetched, so semantic negatives recorded before a rule existed heal on
+    the next read instead of pinning a decline until TTL.
+    """
     if os.environ.get("CHEMICA_NO_CACHE"):
         return requests.get(url, **kwargs)
     path = _entry_path(url)

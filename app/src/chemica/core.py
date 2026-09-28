@@ -317,7 +317,7 @@ def fetch_cross_references(name: str) -> list[CrossReference]:
 
 
 def fetch_interactions(name: str) -> list[Interaction]:
-    """PW interaction lines for the deferred interactions panel."""
+    """PsychonautWiki interaction lines for the deferred interactions panel."""
     from chemica.sources.psychonaut import PsychonautWikiSource
 
     return _try(PsychonautWikiSource().fetch_interactions, name) or []
@@ -335,7 +335,7 @@ def fetch_classes(name: str) -> Classifications | None:
 
 
 def fetch_drug_profile(name: str) -> DrugProfile | None:
-    """Regulatory/clinical identity for the deferred drug-profile panel."""
+    """Regulatory and clinical identity for the deferred drug-profile panel."""
     from chemica.sources.pubchem import PubChemSource
 
     source = PubChemSource()
@@ -394,7 +394,7 @@ def _resolve_cross_references(name: str, articles: list[Article], compound: Comp
     if wiki_article:
         raw_titles = wiki_links(WIKI_API, wiki_article.title, limit=500)
         # A link is a real mention only if it appears in the article text,
-        # filtering out navbox/template-only links (e.g. the Stimulants box).
+        # which filters out navbox and template-only links (the Stimulants box).
         text_lower = article_text.lower()
         for title in raw_titles:
             clean = title.split("(")[0].strip()
@@ -402,20 +402,20 @@ def _resolve_cross_references(name: str, articles: list[Article], compound: Comp
                 link_candidates.add(clean)
             if len(link_candidates) >= 15:
                 break
-        # 'See also' is a human-curated related-compound list — filtered out
-        # of the displayed article but kept as first-class candidates here.
+        # 'See also' is a curated related-compound list. It is filtered out of
+        # the displayed article but kept as a first-class candidate here.
         for title in section_links(WIKI_API, wiki_article.title, "see also"):
             link_candidates.add(title.split("(")[0].strip())
 
-    # One batched resolution for every candidate: N name→CID lookups plus a
+    # One batched resolution for every candidate: N name-to-CID lookups plus a
     # single properties call, instead of N full fetch_compound round-trips.
     resolved = source.fetch_many(list(link_candidates | text_candidates))
 
-    # Merge: link candidates first — real Wikipedia links outrank regex
-    # guesses on CID collision. by_cid keeps the first occurrence per
-    # compound. Self-references are filtered by resolved CID, not the raw
-    # query string, so aliases (Preludin → phenmetrazine) can't slip through.
-    # On the deferred path `compound` may be None; resolve it lazily there.
+    # Merge link candidates before text candidates: real Wikipedia links
+    # outrank regex guesses on CID collision. by_cid keeps the first occurrence
+    # per compound. Self-references are filtered by resolved CID rather than by
+    # the raw query string, so aliases (Preludin to phenmetrazine) cannot slip
+    # through. On the deferred path `compound` may be None; resolve it lazily.
     if compound is None:
         compound = source.fetch_compound(name)
     by_cid: dict[int, CrossReference] = {}
@@ -426,9 +426,9 @@ def _resolve_cross_references(name: str, articles: list[Article], compound: Comp
         if compound is not None and target.cid == compound.cid:
             continue
         # Class nouns ('insecticide') resolve to a representative compound
-        # (indoxacarb) via PubChem's depositor synonyms — the card would show
-        # a specific molecule under a generic label. Drop plain lowercase
-        # words the record doesn't even title after the word; technical
+        # (indoxacarb) through PubChem's depositor synonyms, so the card would
+        # show a specific molecule under a generic label. Drop plain lowercase
+        # words that the record does not even title after the word; technical
         # names (MDPV, 2-MMC) and proper nouns (Adams' catalyst) are exempt.
         title = target.raw.get("Title")
         if title and candidate.isalpha() and candidate.islower() and candidate.lower() not in title.lower():
@@ -436,9 +436,9 @@ def _resolve_cross_references(name: str, articles: list[Article], compound: Comp
         if target.cid not in by_cid:
             by_cid[target.cid] = CrossReference(candidate, target)
 
-    # Structural backstop: thin-article compounds (research chems with few
-    # Wikipedia outlinks) get 2D-similarity neighbors so the rail isn't
-    # empty where the graph is sparse.
+    # Structural backstop: thin-article compounds (research chemicals with few
+    # Wikipedia outlinks) get 2D-similarity neighbors so the rail is not empty
+    # where the graph is sparse.
     if len(by_cid) < 6 and compound is not None and compound.cid is not None:
         sim_cids = [c for c in source.fetch_similar(compound.cid, limit=10) if c != compound.cid and c not in by_cid]
         for sim_cid, sim in source.fetch_by_cids(sim_cids).items():
@@ -460,7 +460,7 @@ def _article_sources(name: str):
 
 
 def _try(fn, *args):
-    """A source error becomes a decline, not a page failure."""
+    """Convert a source error into a decline rather than a page failure."""
     try:
         return fn(*args)
     except Exception:
