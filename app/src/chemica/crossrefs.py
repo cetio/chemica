@@ -1,11 +1,9 @@
-"""Cross-references — rabbit holes.
+"""Cross-references: find compound names mentioned in article text.
 
-Given an article's plain text, find compound names mentioned inside it, resolve them
-against PubChem (or any resolver), and return the ones that map to real compounds.
-
-This is the graph feature the D app called `resolveCompoundLinks`. The algorithm is
-heuristic (suffix matching, IUPAC-style names, number-prefixed compounds) plus a
-resolution filter: candidates that don't resolve to a compound are discarded.
+Given plain text, extract candidate compound names, resolve them against PubChem
+(or any resolver), and return the ones that map to real compounds. Extraction is
+heuristic (suffix matching, IUPAC-style names, number-prefixed compounds) and the
+resolution step discards candidates that do not resolve.
 """
 
 from __future__ import annotations
@@ -16,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from chemica.core import Compound, CrossReference
 
-# Pharmaceutical/drug suffixes (5+ chars to reduce false positives).
+# Pharmaceutical and drug suffixes, 5+ characters to reduce false positives.
 SUFFIXES = [
     "amine",
     "azine",
@@ -48,7 +46,7 @@ SUFFIXES = [
     "oxin",
 ]
 
-# Common English words that happen to match a drug suffix but are not compounds.
+# Common English words that match a drug suffix but are not compounds.
 EXCLUDED = {
     "determine",
     "examine",
@@ -93,7 +91,7 @@ _NUM_RE = re.compile(r"\d+-?[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)+")
 
 
 def find_cross_references(text: str, resolver: Callable[[str], Compound | None]) -> list[CrossReference]:
-    """Return all compound mentions in *text* that resolve to a real compound."""
+    """Return every compound mention in `text` that resolves to a real compound."""
     candidates = extract_compound_mentions(text)
     return resolve_candidates(candidates, resolver)
 

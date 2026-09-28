@@ -1,21 +1,18 @@
 """Fixture recording harness for the pytest suite.
 
-a writes the tests first against recorded fixtures; this module is how those
-fixtures get recorded once (against the live API) and replayed forever after.
+The tests are written against recorded fixtures; this module records them once,
+against the live API, for replay afterwards.
 
 Usage:
 
     # Record (run once, with network, when a source's API shape changes):
     python -m chemica.fixtures record aspirin
 
-    # Replay (default in tests): fetch_compound/fetch_article read from disk
-    # and never touch the network.
-
-The harness snapshots per-endpoint raw API responses (not shaped payloads) so
-the conftest replay layer reads exactly what the live API returned. File names
-match the conftest URL→fixture map: cids_{name}.json, properties_{cid}.json,
-synonyms_{cid}.json for PubChem; query_{name}.json, summary_{name}.json for
-Wikipedia.
+The harness snapshots per-endpoint raw API responses rather than shaped payloads,
+so the conftest replay layer reads exactly what the live API returned. File names
+match the conftest URL-to-fixture map: cids_{name}.json, properties_{cid}.json,
+and synonyms_{cid}.json for PubChem; query_{name}.json and summary_{name}.json
+for Wikipedia.
 """
 
 from __future__ import annotations
@@ -51,7 +48,7 @@ def _record_pubchem(query: str) -> None:
     pubchem_dir = FIXTURE_DIR / "pubchem"
     pubchem_dir.mkdir(parents=True, exist_ok=True)
 
-    # cids endpoint — keyed by compound name
+    # cids endpoint, keyed by compound name
     cids_url = f"{PUG}/compound/name/{quote(query)}/cids/JSON"
     cids_resp = requests.get(cids_url, timeout=15)
     if cids_resp.status_code != 200:
@@ -63,7 +60,7 @@ def _record_pubchem(query: str) -> None:
         return
     cid = cids[0]
 
-    # properties endpoint — keyed by CID
+    # properties endpoint, keyed by CID
     props_url = f"{PUG}/compound/cid/{cid}/property/{_PROPS}/JSON"
     props_resp = requests.get(props_url, timeout=15)
     if props_resp.status_code == 200:
@@ -71,7 +68,7 @@ def _record_pubchem(query: str) -> None:
         _write(pubchem_dir / f"properties_{cid}.json", props_body)
         _record_freebase(pubchem_dir, props_body)
 
-    # synonyms endpoint — keyed by CID
+    # synonyms endpoint, keyed by CID
     syn_url = f"{PUG}/compound/cid/{cid}/synonyms/JSON"
     syn_resp = requests.get(syn_url, timeout=15)
     if syn_resp.status_code == 200:
@@ -79,9 +76,11 @@ def _record_pubchem(query: str) -> None:
 
 
 def _record_freebase(pubchem_dir: Path, props_body: dict) -> None:
-    """Salt/mixture records resolve through fastidentity to the freebase CID —
-    record that hop and the base compound's properties or the fixture replay
-    can't exercise the fallthrough (dot-disconnected ConnectivitySMILES)."""
+    """Record the fastidentity hop from a salt/mixture record to the freebase CID.
+
+    Records the hop and the base compound's properties so fixture replay can
+    exercise the fallthrough for a dot-disconnected ConnectivitySMILES.
+    """
     from chemica.sources.pubchem import _ATOM_RE
 
     rows = props_body.get("PropertyTable", {}).get("Properties", [])
@@ -110,7 +109,7 @@ def _record_wikipedia(query: str) -> None:
     wiki_dir = FIXTURE_DIR / "wikipedia"
     wiki_dir.mkdir(parents=True, exist_ok=True)
 
-    # query endpoint — keyed by compound name (title resolution)
+    # query endpoint, keyed by compound name (title resolution)
     query_url = f"{WIKI_API}?action=query&titles={quote(query)}&format=json&redirects=1"
     query_resp = requests.get(query_url, timeout=15, headers=HEADERS)
     if query_resp.status_code != 200:
@@ -126,7 +125,7 @@ def _record_wikipedia(query: str) -> None:
         return
     title = page.get("title", query)
 
-    # extracts endpoint — keyed by resolved title (full sectioned article)
+    # extracts endpoint, keyed by resolved title (full sectioned article)
     extracts_url = (
         f"{WIKI_API}?action=query&prop=extracts&titles={quote(title)}&format=json&explaintext=1&exsectionformat=wiki"
     )
@@ -134,7 +133,7 @@ def _record_wikipedia(query: str) -> None:
     if extracts_resp.status_code == 200:
         _write(wiki_dir / f"extracts_{_safe(title)}.json", extracts_resp.json())
 
-    # media-list endpoint — keyed by resolved title (gallery-flagged figures)
+    # media-list endpoint, keyed by resolved title (gallery-flagged figures)
     medialist_url = f"https://en.wikipedia.org/api/rest_v1/page/media-list/{quote(title)}"
     medialist_resp = requests.get(medialist_url, timeout=15, headers=HEADERS)
     if medialist_resp.status_code == 200:
