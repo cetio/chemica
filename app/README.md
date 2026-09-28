@@ -1,11 +1,13 @@
 # chemica (Python package)
 
-The Python implementation of Chemica — a compound-reference web app that turns a substance
-name into a sourced dossier from PubChem, Wikipedia, PsychonautWiki, and PubMed.
+The Python implementation of Chemica, a compound-reference web app that turns a
+substance name into a sourced article from PubChem, Wikipedia, PsychonautWiki,
+and PubMed.
 
-See the [repository README](../README.md) for features, architecture, and licensing.
+See the [repository README](../README.md) for features, architecture, and
+licensing.
 
-## Quickstart
+## Quick Start
 
 ```sh
 pip install -e ".[dev,web]"

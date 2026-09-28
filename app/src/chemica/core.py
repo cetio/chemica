@@ -1,16 +1,14 @@
 """Core data model and fetch interface.
 
-`fetch_compound_page(name) -> CompoundPage` is the composer the front-ends
-call; the deferred panels go through the narrower helpers
-(fetch_references, fetch_cross_references, fetch_interactions, fetch_classes,
-fetch_drug_profile, fetch_hazards, fetch_figures). All standalone-importable
-— no web/desktop coupling; a desktop app hangs off the same seam the web
-shell does.
+`fetch_compound_page` composes a full page; the deferred panels go through the
+narrower helpers (`fetch_references`, `fetch_cross_references`,
+`fetch_interactions`, `fetch_classes`, `fetch_drug_profile`, `fetch_hazards`,
+`fetch_figures`). Every entry point is importable on its own and independent of
+the web layer.
 
-Each upstream sits behind a source class (PubChem, Wikipedia,
-PsychonautWiki, PubMed) whose fetch_* methods return dataclasses or None —
-`_try` turns a source error into a decline so one bad source can't fail
-the page.
+Each upstream sits behind a source class whose `fetch_*` methods return
+dataclasses or `None`. `_try` converts a source error into a decline, so one
+failing source cannot fail the page.
 """
 
 from __future__ import annotations
@@ -22,7 +20,7 @@ from typing import Any, Protocol, runtime_checkable
 
 @dataclass(frozen=True)
 class Compound:
-    """A PubChem compound record — the property infobox + identifiers."""
+    """A PubChem compound record: the property infobox and identifiers."""
 
     name: str
     cid: int | None = None
@@ -45,7 +43,7 @@ class Compound:
 
 @dataclass(frozen=True)
 class Article:
-    """A sourced article shaped into titled sections — the readable page."""
+    """A sourced article shaped into titled sections."""
 
     title: str
     sections: list[Section]
@@ -71,7 +69,7 @@ class CrossReference:
 
 @dataclass(frozen=True)
 class Reference:
-    """One literature citation (PubMed paper): title + link + abstract snippet."""
+    """A PubMed citation: title, link, and abstract snippet."""
 
     title: str
     url: str | None = None
@@ -81,7 +79,7 @@ class Reference:
 
 @dataclass(frozen=True)
 class HazardProfile:
-    """GHS hazard data for the compound — pictograms, signal, H-statements."""
+    """GHS hazard data: pictograms, signal word, and H-statements."""
 
     pictograms: list[str] = field(default_factory=list)  # e.g. "GHS07"
     signal: str | None = None  # "Warning" or "Danger"
@@ -91,11 +89,12 @@ class HazardProfile:
 
 @dataclass(frozen=True)
 class DrugProfile:
-    """Regulatory/clinical identity from PubChem's PUG-View drug section.
+    """Regulatory and clinical identity from PubChem's PUG-View drug section.
 
-    `availability` is US-jurisdiction (FDA-flavored PubChem records) — render
-    it as 'US: Prescription Only', not universal law. `half_life` keeps the
-    source's strings verbatim since records carry multiple population values.
+    `availability` is US jurisdiction (FDA-flavored PubChem records), so render
+    it as "US: Prescription Only" rather than as universal law. `half_life`
+    keeps the source strings verbatim because records carry multiple population
+    values.
     """
 
     max_phase: str | None = None  # e.g. "Approved"
@@ -112,10 +111,10 @@ class DrugProfile:
 class Interaction:
     """A substance interaction line from PsychonautWiki's annotated markup.
 
-    Severity comes straight from the [[*Interaction::…]] semantic tag —
-    'dangerous' | 'unsafe' | 'uncertain'. One line can name several
-    substances that share a description (GHB / GBL), so each gets its own
-    Interaction with the same text.
+    Severity comes from the `[[*Interaction::…]]` semantic tag: `dangerous`,
+    `unsafe`, or `uncertain`. One line can name several substances that share a
+    description (GHB and GBL), so each gets its own Interaction with the same
+    text.
     """
 
     substance: str
@@ -125,10 +124,12 @@ class Interaction:
 
 @dataclass(frozen=True)
 class Classifications:
-    """PW's semantic class annotations from the article lead —
-    'arylcyclohexylamine' / 'dissociative' for ketamine. Fills the
-    'what kind of thing is this' slot on research chems PubChem's
-    drug record never classifies."""
+    """PsychonautWiki's semantic class annotations from the article lead.
+
+    For example `arylcyclohexylamine` and `dissociative` for ketamine. These
+    fill the "what kind of thing is this" slot that PubChem's drug record leaves
+    empty for research chemicals.
+    """
 
     chemical: str | None = None
     psychoactive: str | None = None
@@ -137,9 +138,12 @@ class Classifications:
 
 @dataclass(frozen=True)
 class EffectGroup:
-    """PW groups subjective effects — 'Physical', 'Visual', 'Cognitive'
-    from the {{effects/X}} templates, 'Suppression'/'Distortions' from
-    subheadings inside them. Label is None for an unlabeled block."""
+    """A group of subjective effects.
+
+    Labels come from the `{{effects/X}}` templates ('Physical', 'Visual',
+    'Cognitive') or from subheadings inside them ('Suppression',
+    'Distortions'). `label` is None for an unlabeled block.
+    """
 
     label: str | None
     effects: list[str] = field(default_factory=list)
@@ -147,9 +151,11 @@ class EffectGroup:
 
 @dataclass(frozen=True)
 class SubjectiveProfile:
-    """PW's safety/subjective annotations from the article wikitext —
-    addiction potential, tolerance timelines, and the inline [[Effect::X]]
-    tag list (deduplicated, source order)."""
+    """PsychonautWiki's safety and subjective annotations from the wikitext.
+
+    Carries addiction potential, tolerance timelines, and the inline
+    `[[Effect::X]]` tag list, deduplicated in source order.
+    """
 
     addiction_potential: str | None = None
     tolerance_full: str | None = None
@@ -162,9 +168,9 @@ class SubjectiveProfile:
 
 @dataclass(frozen=True)
 class DoseLadder:
-    """One route's dose ladder (threshold → heavy), as printed by the source.
+    """One route's dose ladder, from threshold to heavy, as printed by the source.
 
-    Values keep the source's units in the string ("50 - 150 mg") — the panel
+    Values keep the source's units in the string ("50 - 150 mg"), so the panel
     displays what the wiki says rather than trusting a unit parse.
     """
 
@@ -179,7 +185,7 @@ class DoseLadder:
 
 @dataclass(frozen=True)
 class EffectsProfile:
-    """One route's experience timeline (onset → aftereffects)."""
+    """One route's experience timeline, from onset through after-effects."""
 
     route: str
     onset: str | None = None
@@ -195,10 +201,9 @@ class CompoundPage:
     """Everything the front-ends need to render one compound page.
 
     Sources contribute what they cover: PubChem the compound, Wikipedia and
-    PsychonautWiki articles, PubMed literature, PsychonautWiki the dose
+    PsychonautWiki articles, PubMed literature, and PsychonautWiki the dose
     ladders and timelines. Cross-references are resolved from the article text.
-    Absent coverage stays absent — an empty list means "no source had this",
-    not "this compound has none".
+    An empty list means no source had the data, not that the compound has none.
     """
 
     compound: Compound | None
@@ -213,8 +218,10 @@ class CompoundPage:
 
 @runtime_checkable
 class Source(Protocol):
-    """The article/compound seam a source plugs into — PubMed opts out,
-    serving only references for its own panel."""
+    """The article and compound seam a source plugs into.
+
+    PubMed opts out, serving only references for its own panel.
+    """
 
     name: str
 
@@ -224,7 +231,7 @@ class Source(Protocol):
 
 
 def fetch_compound(name: str) -> Compound | None:
-    """Resolve a name to a Compound — PubChem is the identity source.
+    """Resolve a name to a Compound. PubChem is the identity source.
 
     Returns None if PubChem has no record for the name.
     """
@@ -236,22 +243,22 @@ def fetch_compound(name: str) -> Compound | None:
 def fetch_article(name: str) -> Article | None:
     """Resolve a name to the first sourced Article, or None if none has one.
 
-    Sources answer in priority order (Wikipedia, PsychonautWiki, PubMed); the
-    first hit wins. The multi-source view is fetch_compound_page.
+    Sources answer in priority order (Wikipedia, then PsychonautWiki); the first
+    hit wins. For the multi-source view, use `fetch_compound_page`.
     """
     return next(iter(_article_sources(name)), None)
 
 
 def fetch_compound_page(name: str, defer: frozenset[str] = frozenset()) -> CompoundPage:
-    """Compose the full page: compound, every sourced article, dose data.
+    """Compose the full page: compound, every sourced article, and dose data.
 
-    `defer` names the expensive fields to skip on the first paint —
-    "references" (PubMed) and "cross_references" (the resolver fanout) are
-    served later through their own entry points by the web shell.
+    `defer` names the expensive fields to skip on first paint. "references"
+    (PubMed) and "cross_references" (the resolver fanout) are served later
+    through their own entry points by the web shell.
 
-    The remaining sources run in parallel: PubChem, Wikipedia, and
-    PsychonautWiki are different hosts with different rate limits, so cold
-    load drops from sum-of-sources to max-of-sources.
+    The remaining sources run in parallel. PubChem, Wikipedia, and
+    PsychonautWiki are different hosts with different rate limits, so a cold
+    load costs the slowest source rather than the sum of all of them.
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -302,8 +309,8 @@ def fetch_references(name: str) -> list[Reference]:
 def fetch_cross_references(name: str) -> list[CrossReference]:
     """Related-compound resolution for the deferred rail panel.
 
-    Re-derives articles and the compound through the module-level caches —
-    on the fragment path those are warm from the first paint.
+    Re-derives articles and the compound through the module-level caches, which
+    are warm from the first paint on the fragment path.
     """
     articles = list(_article_sources(name))
     return _resolve_cross_references(name, articles, None)
@@ -317,8 +324,11 @@ def fetch_interactions(name: str) -> list[Interaction]:
 
 
 def fetch_classes(name: str) -> Classifications | None:
-    """PW chemical/psychoactive class annotations — a first-paint field,
-    cheap because the page wikitext is memoized from the profile fetch."""
+    """PsychonautWiki chemical and psychoactive class annotations.
+
+    A first-paint field, cheap because the page wikitext is memoized from the
+    profile fetch.
+    """
     from chemica.sources.psychonaut import PsychonautWikiSource
 
     return _try(PsychonautWikiSource().fetch_classes, name)
@@ -350,12 +360,13 @@ _SPECIMEN_RE = re.compile(r"\b(vial|powder|crystal|sample|tablet|bottle|blister|
 
 
 def fetch_figures(name: str) -> dict:
-    """Captioned figures from the resolved Wikipedia article — for the
-    deferred figure strip. page_figures filters to gallery-flagged media
-    with captions, which drops navbox chrome and infobox-duplicating
-    structure depictions. The frontispiece is the first figure whose caption
-    describes a real-world specimen (vial, powder, crystals...) rather than a
-    diagram or table — what the substance looks like, not what it is."""
+    """Captioned figures from the resolved Wikipedia article, for the figure strip.
+
+    `page_figures` filters to gallery-flagged media with captions, which drops
+    navbox chrome and infobox-duplicating structure depictions. The frontispiece
+    is the first figure whose caption describes a real-world specimen (vial,
+    powder, crystals, and so on) rather than a diagram or table.
+    """
     from chemica.sources import mediawiki
     from chemica.sources.wikipedia import API, WikipediaSource
 

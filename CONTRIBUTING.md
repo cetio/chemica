@@ -1,12 +1,23 @@
 # Contributing to Chemica
 
-Chemica turns a substance name into a readable, sourced article. This document
-covers the dev loop; the working agreements for the shared tree live in
-`AGENTS.md`, and the conduct expectations live in `CODE_OF_CONDUCT.md`.
+Thanks for contributing to Chemica. Keep changes focused, follow the existing
+design and Python style, and include tests for behavioral changes.
 
-## Setup
+## Reporting Issues
 
-The application is the Python package in `app/` (Python ≥ 3.12):
+Search existing issues before opening a new one. Bug reports should include:
+
+- Steps to reproduce and the compound name that triggers the problem.
+- Expected and actual behavior.
+- Python version and operating system.
+- Relevant client or upstream logs, without credentials or other sensitive data.
+
+Feature requests should describe the use case, the expected page or panel
+behavior, and which source the data would come from.
+
+## Development Setup
+
+The application is the Python package in `app/` (Python 3.12 or newer):
 
 ```sh
 cd app
@@ -21,82 +32,90 @@ Run the web shell:
 uvicorn chemica.web.main:app --port 8802
 ```
 
-Then open `http://localhost:8802` — search a compound, get a dossier page.
+Then open <http://127.0.0.1:8802> and search for a compound.
+
+## Pull Requests
+
+- Work on a focused branch and explain both what changed and why.
+- Follow the conventions in neighboring modules. Avoid unnecessary dependencies
+  or abstractions.
+- Document public types and functions with docstrings.
+- Call out intentional differences from an upstream API's documented behavior.
+- Update user and contributor documentation when commands or public behavior
+  change.
+- Add tests for every bug fix and feature.
 
 ## Tests
+
+Run the offline suite and the linter before submitting a pull request:
 
 ```sh
 cd app
 pytest
-ruff check src tests    # lint gate — config in app/pyproject.toml
+ruff check src tests
 ```
 
 Tests replay recorded HTTP fixtures and never touch the network. The seam is
 `app/tests/conftest.py`: each source's HTTP call is monkeypatched to read the
 matching file under `app/tests/fixtures/`.
 
-When a source's API shape changes (or you add a new endpoint), record fresh
-fixtures once, with network:
+When a source's API shape changes, or when you add an endpoint, record fresh
+fixtures once with network access:
 
 ```sh
 cd app
 python -m chemica.fixtures record <compound-name>
 ```
 
-`app/src/chemica/fixtures.py` snapshots raw per-endpoint responses — not shaped
-payloads — so replay sees exactly what the live API returned.
+`app/src/chemica/fixtures.py` snapshots raw per-endpoint responses rather than
+shaped payloads, so replay sees exactly what the live API returned.
 
 ## Architecture
 
-- `app/src/chemica/core.py` — the compound/page model and the composer that
-  merges sources. Independent of the web layer; nothing here imports FastAPI.
-- `app/src/chemica/sources/` — one adapter per upstream (PubChem, Wikipedia /
-  MediaWiki, PsychonautWiki, PubMed). Each returns plain model objects.
-- `app/src/chemica/web/` — FastAPI routes, Jinja templates, static assets.
-  Presentation only.
-- `app/src/chemica/crossrefs.py` — Wikipedia-outlink candidate extraction for
-  the related-compounds rail.
-- `app/src/chemica/cache.py` — the disk cache that keeps warm loads fast.
+| Path | Contents |
+| --- | --- |
+| `app/src/chemica/core.py` | The compound/page model and the composer that merges sources. Independent of the web layer. |
+| `app/src/chemica/sources/` | One adapter per upstream (PubChem, Wikipedia/MediaWiki, PsychonautWiki, PubMed). Each returns plain model objects. |
+| `app/src/chemica/web/` | FastAPI routes, Jinja templates, and static assets. Presentation only. |
+| `app/src/chemica/crossrefs.py` | Candidate extraction for the related-compounds rail. |
+| `app/src/chemica/cache.py` | The disk cache that keeps warm loads fast. |
 
 ### Deferred fragments
 
-Slow secondary panels (references, related compounds, hazards, interactions)
-do not block first paint. The page route renders the core dossier; each panel
-is a `<div class="fragment-slot">` that `static/fragments.js` swaps for a
-rendered partial from a `/compound/{name}/<panel>` route. When all slots
-settle, the script sets `data-panels-settled="1"` on `<body>` — tests and
-browser checks should wait on that signal, not on timing.
+Secondary panels (references, related compounds, hazards, interactions) do not
+block first paint. The page route renders the core article; each panel is a
+`<div class="fragment-slot">` that `static/fragments.js` swaps for a rendered
+partial from a `/compound/{name}/<panel>` route. When all slots settle, the
+script sets `data-panels-settled="1"` on `<body>`; tests and browser checks
+should wait on that signal rather than on timing.
 
-Anchor IDs belong on the *rendered* section inside the partial, not on the
-slot — `outerHTML` replacement deletes the slot node.
+Anchor IDs belong on the rendered section inside the partial, not on the slot,
+because `outerHTML` replacement deletes the slot node.
 
 ### Vendored assets
 
 Third-party browser assets are vendored under `app/src/chemica/web/static/`
-rather than loaded from a CDN: `3dmol-min.js` (BSD-3, see
-`3Dmol-LICENSE.txt`) and the GHS pictogram SVGs (UN GHS standard images). Keep it
-that way — no runtime external script/img dependencies.
+rather than loaded from a CDN: `3dmol-min.js` (BSD-3-Clause, see
+`3Dmol-LICENSE.txt`) and the GHS pictogram SVGs (UN GHS standard images). Keep
+them vendored; the page must not depend on external scripts or images at
+runtime.
 
-## Conventions
+## Review Checklist
 
-- Follow PEP 8-ish Python; keep lines under ~120 characters.
-- Keep the core↔web boundary clean: sources return models, templates render
-  them. No HTTP fetching in templates, no HTML in sources.
-- Every panel renders a source tag (PubChem, Wikipedia, PsychonautWiki,
-  PubMed). New content must carry its attribution.
-- Missing data is a decline message, not an empty panel or a silent 204 —
-  the TOC link stays valid either way.
-- Commits are small, coherent, subject-only (imperative, under ~72 chars) —
-  no trailers, no generated-by lines. Stage only your files; never
-  `git add -A` over the shared tree.
+Before opening a pull request:
 
-## The team process
+1. Run the offline tests and the linter.
+2. Confirm new tests fail without the fix when practical.
+3. Review the diff for generated files, unrelated changes, and sensitive data.
+4. Verify documentation examples and links affected by the change.
 
-Three agent seats work this tree concurrently as a scrum team — see
-`AGENTS.md` and `.devin/skills/chemica-scrum/`. If you're a human contributor
-you can ignore most of that, but two rules are load-bearing for everyone:
+## Communication and Conduct
 
-- One writer per file at a time — announce before editing a file a teammate
-  is working in.
-- An honest "I could not verify this" beats a confident guess. Run the suite
-  before claiming a change works.
+Ask questions in issues or pull request comments, and keep discussions
+respectful and constructive. The conduct expectations live in
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+## License
+
+By contributing, you agree that your contributions are licensed under the same
+[AGPL-3.0 license](LICENSE.txt) as Chemica.
