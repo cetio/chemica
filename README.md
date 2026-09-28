@@ -3,43 +3,41 @@
 [![License](https://img.shields.io/badge/License-AGPL--3-blue)](LICENSE.txt)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](app/pyproject.toml)
 
-> Chemica was rewritten starting September 2026 to use Python + web hosting to allow for better portability. The original GTK D version is at
-Chemica is a compound-reference web app: give it a substance name and it assembles a sourced dossier —
-properties and identifiers from PubChem, the article from Wikipedia, dosage, effects, and interaction
-data from PsychonautWiki, literature references from PubMed, and GHS hazard pictograms from PubChem's
-safety record — rendered as a single readable page with a live 3D structure viewer.
+> Chemica was rewritten starting September 2026 to use Python + web hosting to allow for better portability. The original GTK D version is at commit 4199083a6220ca2152940c661c190dd5ed00484c, but obviously this is no longer maintained.
 
-NEW:
+Chemica is a compound-reference web app for properties and identifiers from PubChem, the article from Wikipedia, dosage, effects, and interaction data from PsychonautWiki, literature references from PubMed, and GHS hazard pictograms from PubChem's safety record.
+
+NEW (latest):
 
 
-OLD:
+OLD (4199083a6220ca2152940c661c190dd5ed00484c):
 
 https://github.com/user-attachments/assets/33b72559-45b5-4a8c-ad70-571d5741e524
 
 ## Features
 
-- **3D molecular viewer** — PubChem 3D conformers rendered with 3Dmol.js, with atom tooltips and a
+- **3D molecular viewer**: PubChem 3D conformers rendered with 3Dmol.js, with atom tooltips and a
   2D fallback.
-- **Chemical properties and identifiers** — XLogP, MW, formula, TPSA, charge, SMILES, InChI,
+- **Chemical properties and identifiers**: XLogP, MW, formula, TPSA, charge, SMILES, InChI,
   InChIKey, CAS.
-- **Dosage tables** — per-route thresholds and dose ranges plus bioavailability, from
+- **Dosage tables**: per-route thresholds and dose ranges plus bioavailability, from
   PsychonautWiki's SubstanceBox.
-- **Effects timelines** — onset / come-up / peak / offset / after-effects per route.
-- **Interactions** — dangerous and uncertain combination warnings with descriptions.
-- **GHS hazards** — pictograms, signal word, and H-statements from PubChem's safety section.
-- **Literature references** — PubMed search results linked per paper.
-- **Cross-references** — related compounds resolved and linked, including curated "See also" entries.
-- **Progressive rendering** — PubChem, Wikipedia, and PsychonautWiki fetch in parallel for first
+- **Effects timelines**: onset / come-up / peak / offset / after-effects per route.
+- **Interactions**: dangerous and uncertain combination warnings with descriptions.
+- **GHS hazards**: pictograms, signal word, and H-statements from PubChem's safety section.
+- **Literature references**: PubMed search results linked per paper.
+- **Cross-references**: related compounds resolved and linked, including curated "See also" entries.
+- **Progressive rendering**: PubChem, Wikipedia, and PsychonautWiki fetch in parallel for first
   paint; heavier panels (interactions, references, hazards, cross-references) load as lazy fragments.
-- **Persistent HTTP cache** — upstream responses are cached on disk, so warm loads are near-instant
+- **Persistent HTTP cache**: upstream responses are cached on disk, so warm loads are near-instant
   and survive restarts.
 
 ### Sources
 
-- **PubChem** — compound resolution, properties, identifiers, 2D/3D structures, GHS safety data.
-- **Wikipedia** — article prose and section structure.
-- **PsychonautWiki** — dosage, duration, bioavailability, and interaction data via the MediaWiki API.
-- **PubMed** — literature references via NCBI Entrez.
+- **PubChem**: compound resolution, properties, identifiers, 2D/3D structures, GHS safety data.
+- **Wikipedia**: article prose and section structure.
+- **PsychonautWiki**: dosage, duration, bioavailability, and interaction data via the MediaWiki API.
+- **PubMed**: literature references via NCBI Entrez.
 
 ## Running
 
